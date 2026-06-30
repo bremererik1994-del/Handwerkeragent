@@ -11,6 +11,7 @@ app.use(helmet());
 app.use(cors({ origin: config.frontendUrl, credentials: true }));
 app.use(express.json());
 app.use(express.static('uploads')); // serve uploaded media
+app.use(express.static('public'));  // serve legal pages etc.
 
 app.use('/api', routes);
 
