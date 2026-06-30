@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm ci && npm run db:generate"
+buildCommand = "npm run db:generate"
 
 [deploy]
 startCommand = "npx prisma migrate deploy && npx tsx src/index.ts"
