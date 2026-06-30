@@ -152,8 +152,8 @@ async function createAuditLog(
       entryId,
       changedBy,
       changeType,
-      oldValue: oldValue ? (oldValue as Record<string, unknown>) : undefined,
-      newValue: newValue ? (newValue as Record<string, unknown>) : undefined,
+      oldValue: oldValue ? (oldValue as unknown as any) : undefined,
+      newValue: newValue ? (newValue as unknown as any) : undefined,
     },
   });
 }

@@ -87,8 +87,8 @@ router.patch('/:id', requireRole(['INHABER']), async (req, res) => {
         entryId: id,
         changedBy: userId,
         changeType: 'CORRECT',
-        oldValue: old as unknown as Record<string, unknown>,
-        newValue: updated as unknown as Record<string, unknown>,
+        oldValue: old as unknown as any,
+        newValue: updated as unknown as any,
         reason,
       },
     });

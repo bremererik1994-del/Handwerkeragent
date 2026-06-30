@@ -99,7 +99,7 @@ async function processInboundMessage(msg: WaMessage, phoneNumberId: string) {
     where: { id: waMsg.id },
     data: {
       parsedIntent: parsed.intent,
-      parsedData: parsed as unknown as Record<string, unknown>,
+      parsedData: parsed as unknown as any,
       processingState: parsed.confidence === 'LOW' ? 'CLARIFICATION_NEEDED' : 'PROCESSED',
     },
   });
@@ -131,7 +131,7 @@ async function processInboundMessage(msg: WaMessage, phoneNumberId: string) {
   if (['START', 'END', 'BREAK', 'DAY_ENTRY'].includes(parsed.intent)) {
     await handleTimeTrackingIntent(employee, parsed, waMsg.id, fromPhone);
   } else if (['LAGER', 'UMSATZ', 'KASSENABSCHLUSS'].includes(parsed.intent)) {
-    await handleLocationReportIntent(employee, parsed.intent, parsed, undefined, text);
+    await handleLocationReportIntent(employee, parsed.intent, parsed as any, undefined, text);
   } else if (parsed.intent === 'KRANK') {
     await handleKrank(employee as any, parsed, waMsg.id, fromPhone);
   } else if (parsed.intent === 'URLAUB') {

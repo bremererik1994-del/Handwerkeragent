@@ -26,5 +26,5 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
 }
 
 export function issueToken(payload: JwtPayload): string {
-  return jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+  return jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiresIn } as any);
 }

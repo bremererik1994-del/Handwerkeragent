@@ -54,7 +54,7 @@ export async function handleLocationReportIntent(
       employeeId: employee.id,
       reportType,
       content: rawText ?? '',
-      data: data as Record<string, unknown>,
+      data: data as unknown as any,
     },
   });
 
