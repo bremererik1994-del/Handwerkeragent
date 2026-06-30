@@ -1,0 +1,327 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum IndustryType {
+  HANDWERK
+  EINZELHANDEL
+  SONSTIGES
+}
+
+enum EmployeeRole {
+  MITARBEITER
+  STANDORTLEITER
+  INHABER
+}
+
+enum EmploymentType {
+  VOLLZEIT
+  TEILZEIT
+  MINIJOB
+}
+
+enum OnboardingState {
+  INVITED      // invitation sent, no response yet
+  OPTED_IN     // GDPR consent given
+  TRAINED      // completed onboarding dialog
+  ACTIVE       // working normally
+}
+
+enum LocationType {
+  BAUSTELLE
+  LADEN
+  SONSTIGES
+}
+
+enum LocationStatus {
+  GEPLANT
+  AKTIV
+  ABGESCHLOSSEN
+}
+
+enum TimeEntryStatus {
+  RUNNING
+  COMPLETED
+  CORRECTED
+  DISPUTED
+}
+
+enum AbsenceType {
+  KRANK
+  URLAUB
+  ZEITAUSGLEICH
+  SONDERURLAUB
+}
+
+enum AbsenceStatus {
+  GEMELDET
+  BESTAETIGT
+  ABGELEHNT
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+// ─── Company ──────────────────────────────────────────────────────────────────
+
+model Company {
+  id          String       @id @default(cuid())
+  name        String
+  industry    IndustryType @default(EINZELHANDEL)
+  // WhatsApp Business number linked to this company (E.164 format)
+  waPhone     String?      @unique
+  // signup token for self-service onboarding
+  signupToken String?      @unique
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  settings    CompanySettings?
+  employees   Employee[]
+  locations   Location[]
+  messages    WhatsAppMessage[]
+
+  @@map("companies")
+}
+
+model CompanySettings {
+  id        String  @id @default(cuid())
+  companyId String  @unique
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Surcharge rates in % – defaults follow typical German Einzelhandel/TV-L usages
+  nightSurchargeRate    Float @default(25.0)
+  sundaySurchargeRate   Float @default(50.0)
+  holidaySurchargeRate  Float @default(125.0)
+  overtimeThresholdWeek Float @default(40.0) // hours/week before overtime
+
+  // Minijob: monthly earnings limit (2024: 538 EUR)
+  minijobMonthlyLimit Float @default(538.0)
+
+  // Reminder hours after invite before auto-reminder
+  onboardingReminderHours Int @default(24)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("company_settings")
+}
+
+// ─── Employee ─────────────────────────────────────────────────────────────────
+
+model Employee {
+  id             String          @id @default(cuid())
+  companyId      String
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  name           String
+  // E.164 phone = WhatsApp identity, no separate login
+  phone          String          @unique
+  role           EmployeeRole    @default(MITARBEITER)
+  employmentType EmploymentType  @default(VOLLZEIT)
+  hourlyRate     Float?
+  // Minijob: monthly gross limit tracking
+  monthlyEarningsLimit Float?
+
+  onboardingState OnboardingState @default(INVITED)
+  gdprConsent     Boolean         @default(false)
+  gdprConsentAt   DateTime?
+
+  // Retention: data must be deleted/anonymized after legal retention period
+  // Lohnunterlagen: 6 Jahre AO, 10 Jahre HGB – store until this date
+  retainUntil DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // soft-delete for GDPR erasure
+
+  timeEntries          TimeEntry[]
+  absences             Absence[]
+  locationAssignments  LocationAssignment[]
+  messages             WhatsAppMessage[]
+  locationMedia        LocationMedia[]
+  locationReports      LocationReport[]
+
+  @@map("employees")
+}
+
+// ─── Location (branchenneutral) ───────────────────────────────────────────────
+
+model Location {
+  id           String         @id @default(cuid())
+  companyId    String
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  name         String
+  address      String
+  locationType LocationType   @default(LADEN)
+  status       LocationStatus @default(AKTIV)
+
+  // BAUSTELLE: planned hours for Soll/Ist comparison
+  plannedHours Float?
+  startDate    DateTime?
+  endDate      DateTime?
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  assignments  LocationAssignment[]
+  timeEntries  TimeEntry[]
+  media        LocationMedia[]
+  reports      LocationReport[]
+
+  @@map("locations")
+}
+
+model LocationAssignment {
+  id         String   @id @default(cuid())
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([locationId, employeeId])
+  @@map("location_assignments")
+}
+
+// ─── Time Tracking ────────────────────────────────────────────────────────────
+
+model TimeEntry {
+  id         String    @id @default(cuid())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+  companyId  String
+
+  startTime    DateTime
+  endTime      DateTime?
+  breakMinutes Int       @default(0)
+  // Computed on completion: (endTime - startTime) - breakMinutes
+  totalMinutes Int?
+
+  status TimeEntryStatus @default(RUNNING)
+
+  // Source traceability
+  sourceMessageId String?
+  rawText         String? // original WhatsApp text for audit
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs TimeEntryAudit[]
+
+  @@map("time_entries")
+}
+
+// ─── Absences ─────────────────────────────────────────────────────────────────
+
+model Absence {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  companyId  String
+
+  type          AbsenceType
+  status        AbsenceStatus @default(GEMELDET)
+  startDate     DateTime
+  endDate       DateTime
+  durationDays  Int
+
+  note            String?
+  sourceMessageId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("absences")
+}
+
+// Immutable audit trail – required for Lohnstreitigkeiten
+model TimeEntryAudit {
+  id         String    @id @default(cuid())
+  entryId    String
+  entry      TimeEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  changedBy  String    // employeeId or "system"
+  changeType String    // CREATE | UPDATE | CORRECT | DISPUTE
+  oldValue   Json?
+  newValue   Json?
+  reason     String?
+  createdAt  DateTime  @default(now())
+
+  @@map("time_entry_audits")
+}
+
+// ─── WhatsApp Messages ────────────────────────────────────────────────────────
+
+model WhatsAppMessage {
+  id         String   @id @default(cuid())
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+
+  waMessageId String           @unique // Meta message_id
+  direction   MessageDirection
+  content     String
+  mediaUrl    String?
+  mediaType   String?          // image | video | document
+
+  // NLP parsing result
+  parsedIntent String? // START | END | BREAK | LAGER | UMSATZ | FOTO | ONBOARDING_OPT_IN | UNKNOWN
+  parsedData   Json?
+  // PENDING | PROCESSED | CLARIFICATION_NEEDED | ERROR
+  processingState String @default("PENDING")
+  clarificationSent Boolean @default(false)
+
+  sentAt    DateTime
+  createdAt DateTime @default(now())
+
+  @@map("whatsapp_messages")
+}
+
+// ─── Location Media & Reports ─────────────────────────────────────────────────
+
+model LocationMedia {
+  id         String   @id @default(cuid())
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  url       String // stored path or S3 key
+  mediaType String // image | video
+  caption   String?
+  gpsLat    Float?
+  gpsLon    Float?
+  takenAt   DateTime?
+  createdAt DateTime @default(now())
+
+  @@map("location_media")
+}
+
+model LocationReport {
+  id         String   @id @default(cuid())
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  // LAGER | UMSATZ | PROBLEM | KASSENABSCHLUSS | DEKORATION
+  reportType String
+  content    String
+  data       Json?    // structured data extracted by NLP
+  createdAt  DateTime @default(now())
+
+  @@map("location_reports")
+}

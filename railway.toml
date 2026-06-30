@@ -1,0 +1,9 @@
+[build]
+builder = "nixpacks"
+buildCommand = "npm ci && npm run db:generate && npm run build"
+
+[deploy]
+startCommand = "npx prisma migrate deploy && npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
