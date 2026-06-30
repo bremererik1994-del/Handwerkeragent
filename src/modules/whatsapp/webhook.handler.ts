@@ -110,8 +110,8 @@ async function processInboundMessage(msg: WaMessage, phoneNumberId: string) {
     return;
   }
 
-  // Block non-opted-in employees from time tracking
-  if (employee.onboardingState === 'INVITED') {
+  // Block non-opted-in employees from time tracking (DSGVO: ohne Einwilligung keine Verarbeitung)
+  if (employee.onboardingState === 'INVITED' || !employee.gdprConsent) {
     await wa.sendMessage({
       to: fromPhone,
       text: 'Bitte bestätige zuerst deine Einladung mit "Ja", um ZeitPilot zu nutzen.',

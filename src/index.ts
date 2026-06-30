@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './config';
 import routes from './routes/index';
+import { scheduleGdprCleanup } from './jobs/gdprCleanup';
 
 const app = express();
 
@@ -22,4 +23,5 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 app.listen(config.port, () => {
   console.log(`ZeitPilot Backend running on port ${config.port} (${config.nodeEnv})`);
+  scheduleGdprCleanup();
 });

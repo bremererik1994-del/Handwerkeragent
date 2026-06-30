@@ -172,9 +172,14 @@ router.patch('/employees/:id', async (req, res) => {
 router.delete('/employees/:id', async (req, res) => {
   try {
     const companyId = (req as any).user.companyId as string;
+    const now = new Date();
+    // Lohnunterlagen müssen gem. §41 EStG / §147 AO 6 Jahre aufbewahrt werden,
+    // daher kein Hartlöschen vor Ablauf dieser Frist.
+    const retainUntil = new Date(now);
+    retainUntil.setFullYear(retainUntil.getFullYear() + 6);
     await prisma.employee.updateMany({
       where: { id: req.params.id, companyId },
-      data: { deletedAt: new Date() },
+      data: { deletedAt: now, retainUntil },
     });
     res.json({ ok: true });
   } catch {
