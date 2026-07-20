@@ -290,6 +290,19 @@ model WhatsAppMessage {
   @@map("whatsapp_messages")
 }
 
+// ─── Company Onboarding Session ──────────────────────────────────────────────
+
+model CompanyOnboardingSession {
+  id       String   @id @default(cuid())
+  phone    String   @unique
+  step     String   @default("AWAIT_NAME") // AWAIT_NAME | AWAIT_INDUSTRY | DONE
+  tempData Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("company_onboarding_sessions")
+}
+
 // ─── Location Media & Reports ─────────────────────────────────────────────────
 
 model LocationMedia {

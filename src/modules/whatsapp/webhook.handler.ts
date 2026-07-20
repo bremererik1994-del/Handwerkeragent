@@ -7,6 +7,7 @@ import { handleTimeTrackingIntent } from '../timetracking/service';
 import { handleOnboardingIntent } from '../onboarding/service';
 import { handleLocationReportIntent } from '../location/service';
 import { handleKrank, handleUrlaub, handleZeitausgleich, handleSonderurlaub } from '../absence/service';
+import { handleCompanyOnboarding } from '../company-onboarding/service';
 
 // GET /webhook – Meta verification handshake
 export async function verifyWebhook(req: Request, res: Response) {
@@ -59,8 +60,11 @@ async function processInboundMessage(msg: WaMessage, phoneNumberId: string) {
   });
 
   if (!employee) {
-    console.log('[Webhook] unknown phone:', fromPhone);
-    return; // Unknown sender – ignore (no cold replies per Meta policy)
+    // Check if this is a company onboarding session (new boss signing up)
+    const handled = await handleCompanyOnboarding(fromPhone, text);
+    if (handled) return;
+    console.log('[Webhook] unknown phone, no onboarding session:', fromPhone);
+    return;
   }
 
   // Store inbound message
