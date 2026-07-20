@@ -45,14 +45,15 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--bg);
     color: var(--text);
-    height: 100vh;
+    height: 100dvh;
     display: flex;
     overflow: hidden;
+    min-width: 0;
   }
 
   .panel {
-    width: 320px;
-    min-width: 280px;
+    width: 300px;
+    flex-shrink: 0;
     background: var(--panel-bg);
     border-right: 1px solid var(--border);
     display: flex;
