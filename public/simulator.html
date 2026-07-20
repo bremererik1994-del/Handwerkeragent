@@ -1,0 +1,545 @@
+<title>Rapido – WhatsApp Simulator</title>
+<style>
+  :root {
+    --bg: #111B21;
+    --surface: #1F2C34;
+    --surface2: #2A3942;
+    --border: #2A3942;
+    --sent: #005C4B;
+    --received: #1F2C34;
+    --accent: #00A884;
+    --accent-dim: #00836A;
+    --text: #E9EDEF;
+    --text-dim: #8696A0;
+    --text-meta: #667781;
+    --danger: #E53E3E;
+    --warning: #F6AD55;
+    --success: #48BB78;
+    --panel-bg: #202C33;
+    --input-bg: #2A3942;
+    --header-bg: #202C33;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #F0F2F5; --surface: #FFFFFF; --surface2: #F0F2F5;
+      --border: #E9EDEF; --sent: #D9FDD3; --received: #FFFFFF;
+      --text: #111B21; --text-dim: #667781; --text-meta: #8696A0;
+      --panel-bg: #FFFFFF; --input-bg: #F0F2F5; --header-bg: #F0F2F5;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F0F2F5; --surface: #FFFFFF; --surface2: #F0F2F5;
+    --border: #E9EDEF; --sent: #D9FDD3; --received: #FFFFFF;
+    --text: #111B21; --text-dim: #667781; --text-meta: #8696A0;
+    --panel-bg: #FFFFFF; --input-bg: #F0F2F5; --header-bg: #F0F2F5;
+  }
+  :root[data-theme="dark"] {
+    --bg: #111B21; --surface: #1F2C34; --surface2: #2A3942;
+    --border: #2A3942; --sent: #005C4B; --received: #1F2C34;
+    --text: #E9EDEF; --text-dim: #8696A0; --text-meta: #667781;
+    --panel-bg: #202C33; --input-bg: #2A3942; --header-bg: #202C33;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .panel {
+    width: 320px;
+    min-width: 280px;
+    background: var(--panel-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    background: var(--header-bg);
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-header .logo { font-size: 17px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+  .panel-header h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+  .panel-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .card-header {
+    padding: 9px 13px; background: var(--surface2);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--text-dim); display: flex; align-items: center; gap: 7px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-meta); }
+  .dot.green { background: var(--success); }
+  .dot.orange { background: var(--warning); }
+  .card-body { padding: 12px; display: flex; flex-direction: column; gap: 9px; }
+
+  label { font-size: 11px; color: var(--text-dim); font-weight: 500; }
+  input, select {
+    width: 100%; background: var(--input-bg); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); padding: 7px 10px; font-size: 13px; outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--surface); }
+  .field { display: flex; flex-direction: column; gap: 3px; }
+
+  .btn { padding: 8px 14px; border-radius: 7px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s, opacity 0.15s; width: 100%; }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-dim); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+  .info-box {
+    background: rgba(0,168,132,0.08); border: 1px solid rgba(0,168,132,0.2);
+    border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--text-dim); line-height: 1.5;
+  }
+  .info-box strong { color: var(--accent); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    padding: 4px 9px; border-radius: 14px; background: var(--surface2);
+    border: 1px solid var(--border); font-size: 11px; color: var(--text-dim); cursor: pointer; transition: all 0.12s;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  .step-indicator {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text-meta); padding: 2px 0;
+  }
+  .step-num {
+    width: 18px; height: 18px; border-radius: 50%; background: var(--surface2);
+    font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    color: var(--text-meta); flex-shrink: 0;
+  }
+  .step-num.active { background: var(--accent); color: #fff; }
+  .step-num.done { background: var(--success); color: #fff; }
+
+  /* Chat */
+  .chat { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .chat-header {
+    background: var(--header-bg); border-bottom: 1px solid var(--border);
+    padding: 10px 18px; display: flex; align-items: center; gap: 10px;
+  }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .chat-header-info h3 { font-size: 14px; font-weight: 600; }
+  .chat-header-info p { font-size: 11px; color: var(--text-dim); }
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 14px 18px;
+    display: flex; flex-direction: column; gap: 3px;
+    background-color: var(--bg);
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  .msg-group { display: flex; flex-direction: column; margin-bottom: 5px; }
+  .msg-group.sent { align-items: flex-end; }
+  .msg-group.received { align-items: flex-start; }
+  .bubble {
+    max-width: 74%; padding: 7px 11px 5px; border-radius: 8px;
+    font-size: 13px; line-height: 1.45; word-break: break-word;
+  }
+  .msg-group.sent .bubble { background: var(--sent); color: var(--text); border-bottom-right-radius: 2px; }
+  .msg-group.received .bubble { background: var(--received); color: var(--text); border-bottom-left-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.18); }
+  .bubble .meta { font-size: 10px; color: var(--text-meta); margin-top: 2px; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 3px; }
+  .msg-group.received .bubble .meta { justify-content: flex-start; }
+  .tick { color: var(--accent); font-size: 12px; }
+  .sender-name { font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 1px; padding-left: 2px; }
+  .system-msg {
+    text-align: center; font-size: 11px; color: var(--text-meta);
+    background: rgba(0,0,0,0.2); padding: 3px 10px; border-radius: 7px;
+    align-self: center; margin: 6px 0;
+  }
+  .intent-tag {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 3px;
+    background: rgba(0,168,132,0.15); color: var(--accent); margin-top: 2px;
+  }
+  .empty-state {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 9px; padding: 40px;
+    color: var(--text-meta); text-align: center;
+  }
+  .empty-state .icon { font-size: 36px; }
+  .empty-state h3 { font-size: 15px; color: var(--text-dim); }
+  .empty-state p { font-size: 12px; line-height: 1.55; }
+
+  .chat-input-area {
+    background: var(--panel-bg); border-top: 1px solid var(--border);
+    padding: 10px 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .chat-input-area input { flex: 1; border-radius: 22px; padding: 9px 14px; font-size: 13px; border-color: transparent; }
+  .send-btn {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--accent);
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background 0.15s;
+  }
+  .send-btn:hover { background: var(--accent-dim); }
+  .send-btn svg { width: 18px; height: 18px; fill: white; }
+  .send-btn:disabled { opacity: 0.4; cursor: default; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .error-msg { color: var(--danger); font-size: 11px; margin-top: 3px; }
+  .success-msg { color: var(--success); font-size: 11px; margin-top: 3px; }
+</style>
+
+<div class="panel">
+  <div class="panel-header">
+    <div class="logo">⚡ Rapido</div>
+    <h2>WhatsApp Simulator</h2>
+  </div>
+  <div class="panel-body">
+
+    <!-- Onboarding info -->
+    <div class="info-box">
+      <strong>Echter Flow:</strong> Der Chef schreibt einfach die erste Nachricht — Rapido führt ihn automatisch durch die Einrichtung.<br><br>
+      Im Simulator kannst du diesen Flow als <strong>Chef</strong> oder als <strong>Mitarbeiter</strong> durchspielen.
+    </div>
+
+    <!-- Role select -->
+    <div class="card">
+      <div class="card-header"><div class="dot green"></div>Rolle wählen</div>
+      <div class="card-body">
+        <div class="field">
+          <label>Ich simuliere als…</label>
+          <select id="role-select" onchange="switchRole()">
+            <option value="chef">👔 Chef (Betrieb einrichten)</option>
+            <option value="mitarbeiter">👷 Mitarbeiter (Zeiten buchen)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Meine WhatsApp-Nummer (E.164)</label>
+          <input id="my-phone" type="text" value="+4915780000001">
+        </div>
+      </div>
+    </div>
+
+    <!-- Chef onboarding steps -->
+    <div id="panel-chef">
+      <div class="card">
+        <div class="card-header"><div class="dot orange" id="dot-chef"></div>Chef-Onboarding</div>
+        <div class="card-body">
+          <div class="step-indicator"><div class="step-num" id="step1">1</div>Erste Nachricht → Bot fragt DSGVO-Einwilligung</div>
+          <div class="step-indicator"><div class="step-num" id="step2">2</div>Mit "Ja" zustimmen</div>
+          <div class="step-indicator"><div class="step-num" id="step3">3</div>Betriebsname eingeben</div>
+          <div class="step-indicator"><div class="step-num" id="step4">4</div>Branche wählen (1 / 2 / 3)</div>
+          <div class="step-indicator"><div class="step-num done">✓</div>Betrieb ist angelegt!</div>
+          <div style="font-size:11px;color:var(--text-meta);margin-top:4px;">Schreib einfach los — z.B. "Hallo"</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mitarbeiter panel -->
+    <div id="panel-mitarbeiter" style="display:none">
+      <div class="card">
+        <div class="card-header"><div class="dot orange"></div>Mitarbeiter-Simulation</div>
+        <div class="card-body">
+          <div class="field">
+            <label>Mitarbeiter-Nummer (muss in DB sein)</label>
+            <input id="emp-phone-sim" type="text" value="+4915780000002">
+          </div>
+          <button class="btn btn-ghost" style="font-size:12px" onclick="setEmpPhone()">Als diese Nummer simulieren</button>
+          <div class="chips" style="margin-top:4px">
+            <div class="chip" onclick="sendQuick('Ja')">Ja (Einladung)</div>
+            <div class="chip" onclick="sendQuick('Start 08:00')">Start 08:00</div>
+            <div class="chip" onclick="sendQuick('Ende')">Ende</div>
+            <div class="chip" onclick="sendQuick('Ende, Pause 30')">Ende + Pause</div>
+            <div class="chip" onclick="sendQuick('8:00-17:00')">8–17 Uhr</div>
+            <div class="chip" onclick="sendQuick('heute 8.5h')">Heute 8.5h</div>
+            <div class="chip" onclick="sendQuick('Ich bin krank')">Krank</div>
+            <div class="chip" onclick="sendQuick('Urlaub ab Montag 3 Tage')">Urlaub</div>
+            <div class="chip" onclick="sendQuick('Zeitausgleich morgen')">Zeitausgleich</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;color:var(--text-meta);text-align:center;padding-bottom:4px;">
+      rapido-handwerk.net
+    </div>
+  </div>
+</div>
+
+<!-- Chat -->
+<div class="chat">
+  <div class="chat-header">
+    <div class="avatar">R</div>
+    <div class="chat-header-info">
+      <h3>Rapido Bot</h3>
+      <p id="chat-subtitle">Wähle eine Rolle und schreib los</p>
+    </div>
+    <div style="margin-left:auto">
+      <button class="btn btn-ghost" style="width:auto;padding:5px 10px;font-size:11px" onclick="clearChat()">Leeren</button>
+    </div>
+  </div>
+  <div class="chat-messages" id="chat-messages">
+    <div class="empty-state">
+      <div class="icon">💬</div>
+      <h3>WhatsApp Simulation</h3>
+      <p>Wähle links eine Rolle und schreibe die erste Nachricht — genau wie im echten WhatsApp.</p>
+    </div>
+  </div>
+  <div class="chat-input-area">
+    <input type="text" id="chat-input" placeholder="Nachricht schreiben…"
+      onkeydown="if(event.key==='Enter')sendMessage()">
+    <button class="send-btn" onclick="sendMessage()" id="send-btn">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+const BASE = '/api';
+let currentRole = 'chef';
+let currentPhone = '+4915780000001';
+let chefOnboardingStep = 0; // 0=start, 1=consent asked, 2=name asked, 3=industry asked, 4=done
+
+function ts() {
+  return new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+}
+
+function switchRole() {
+  currentRole = document.getElementById('role-select').value;
+  document.getElementById('panel-chef').style.display = currentRole === 'chef' ? '' : 'none';
+  document.getElementById('panel-mitarbeiter').style.display = currentRole === 'mitarbeiter' ? '' : 'none';
+  updatePhone();
+  updateSubtitle();
+}
+
+function updatePhone() {
+  currentPhone = document.getElementById('my-phone').value.trim();
+}
+
+function setEmpPhone() {
+  currentPhone = document.getElementById('emp-phone-sim').value.trim();
+  document.getElementById('my-phone').value = currentPhone;
+  addSystemMsg('Simuliere als ' + currentPhone);
+  updateSubtitle();
+}
+
+function updateSubtitle() {
+  const role = currentRole === 'chef' ? 'Chef-Onboarding' : 'Mitarbeiter';
+  document.getElementById('chat-subtitle').textContent = role + ' · ' + currentPhone;
+}
+
+function appendToChat(el) {
+  const c = document.getElementById('chat-messages');
+  const empty = c.querySelector('.empty-state');
+  if (empty) empty.remove();
+  c.appendChild(el);
+  c.scrollTop = c.scrollHeight;
+}
+
+function addSystemMsg(text) {
+  const el = document.createElement('div');
+  el.className = 'system-msg';
+  el.textContent = text;
+  appendToChat(el);
+}
+
+function addMessage(text, direction, intentTag, senderName) {
+  const group = document.createElement('div');
+  group.className = `msg-group ${direction}`;
+  if (direction === 'received' && senderName) {
+    const name = document.createElement('div');
+    name.className = 'sender-name';
+    name.textContent = senderName;
+    group.appendChild(name);
+  }
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = text.replace(/\*(.+?)\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  meta.innerHTML = ts() + (direction === 'sent' ? ' <span class="tick">✓✓</span>' : '');
+  bubble.appendChild(meta);
+  if (intentTag) {
+    const tag = document.createElement('div');
+    tag.className = 'intent-tag';
+    tag.textContent = '⚡ ' + intentTag;
+    bubble.appendChild(tag);
+  }
+  group.appendChild(bubble);
+  appendToChat(group);
+}
+
+function addTyping() {
+  const el = document.createElement('div');
+  el.className = 'msg-group received';
+  el.id = 'typing-indicator';
+  el.innerHTML = '<div class="bubble" style="color:var(--text-meta);font-style:italic;font-size:12px">Rapido tippt…</div>';
+  appendToChat(el);
+  return el;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  updatePhone();
+  await simulateSend(text);
+}
+
+function sendQuick(text) {
+  document.getElementById('chat-input').value = text;
+  sendMessage();
+}
+
+async function simulateSend(text) {
+  addMessage(text, 'sent');
+
+  // Update step indicator for chef flow
+  if (currentRole === 'chef') {
+    if (chefOnboardingStep < 4) {
+      chefOnboardingStep++;
+      markStep(chefOnboardingStep);
+    }
+  }
+
+  const typing = addTyping();
+
+  const phone = currentPhone.replace('+', '');
+  const payload = {
+    object: 'whatsapp_business_account',
+    entry: [{
+      id: 'sim_entry',
+      changes: [{
+        field: 'messages',
+        value: {
+          metadata: { phone_number_id: '12127822251913014', display_phone_number: '+15551982124' },
+          messages: [{
+            id: 'sim_' + Date.now(),
+            from: phone,
+            timestamp: Math.floor(Date.now() / 1000).toString(),
+            type: 'text',
+            text: { body: text }
+          }],
+          contacts: [{ profile: { name: currentRole === 'chef' ? 'Chef' : 'Mitarbeiter' }, wa_id: phone }]
+        }
+      }]
+    }]
+  };
+
+  try {
+    const res = await fetch(`${BASE}/webhook`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    await new Promise(r => setTimeout(r, 1000));
+    document.getElementById('typing-indicator')?.remove();
+
+    if (res.ok) {
+      const intent = currentRole === 'chef' ? null : guessIntent(text);
+      const reply = currentRole === 'chef'
+        ? getChefReply(text, chefOnboardingStep)
+        : getMitarbeiterReply(text, intent);
+      addMessage(reply, 'received', intent, 'Rapido Bot');
+
+      if (currentRole === 'chef' && chefOnboardingStep === 4) {
+        setTimeout(() => addSystemMsg('✅ Betrieb wurde im Backend angelegt!'), 500);
+        document.getElementById('dot-chef').classList.replace('orange', 'green');
+      }
+    } else {
+      document.getElementById('typing-indicator')?.remove();
+      addMessage('⚠️ Backend antwortet mit Status ' + res.status + '\n\nIst Railway deployed und läuft?', 'received', null, 'System');
+    }
+  } catch(e) {
+    document.getElementById('typing-indicator')?.remove();
+    addMessage('❌ Keine Verbindung zum Backend.\n\n' + e.message, 'received', null, 'System');
+  }
+}
+
+function markStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('step' + i);
+    if (!el) continue;
+    el.className = 'step-num' + (i < n ? ' done' : i === n ? ' active' : '');
+    el.textContent = i < n ? '✓' : i;
+  }
+}
+
+function getChefReply(text, step) {
+  if (step === 1) {
+    return `👋 Willkommen bei *Rapido* – dein WhatsApp-Assistent für Zeiterfassung!\n\nBevor wir starten, benötigen wir deine Einwilligung zur Datenverarbeitung (DSGVO Art. 6):\n\nRapido speichert deinen Betriebsnamen, deine Mobilfunknummer und die Zeiterfassungsdaten.\n\n📄 Datenschutz: rapido-handwerk.net/datenschutz\n\nBitte antworte mit *Ja* zum Fortfahren oder *Nein* zum Abbrechen.`;
+  }
+  if (step === 2) {
+    return `✅ Danke! Deine Einwilligung wurde gespeichert.\n\n*Wie heißt dein Betrieb?*`;
+  }
+  if (step === 3) {
+    return `Super! *${text}* – gute Wahl 💪\n\nIn welcher Branche bist du tätig?\n\n1️⃣ Handwerk\n2️⃣ Einzelhandel\n3️⃣ Gastronomie / Sonstiges\n\nEinfach die Zahl antworten.`;
+  }
+  if (step === 4) {
+    const industries = { '1': 'Handwerk', '2': 'Einzelhandel', '3': 'Gastronomie / Sonstiges', 'handwerk': 'Handwerk', 'einzelhandel': 'Einzelhandel' };
+    const ind = industries[text.toLowerCase()] ?? 'Sonstiges';
+    return `✅ *${text.toUpperCase().slice(0,1) + text.slice(1)}* ist jetzt bei Rapido registriert!\n\n*Branche:* ${ind}\n\nDu kannst jetzt Mitarbeiter einladen:\n👤 *Mitarbeiter: Name, +4915...*\n\nOder starte deine eigene Zeiterfassung:\n⏱ *Start 08:00*\n\n_Du kannst deine Einwilligung jederzeit widerrufen. Schreib "Datenschutz löschen"._`;
+  }
+  return '✅ Betrieb bereits eingerichtet! Du kannst jetzt Zeiten buchen.';
+}
+
+function guessIntent(text) {
+  const t = text.toLowerCase();
+  if (/^(ja|ok|okay|einverstanden)/.test(t)) return 'ONBOARDING_OPT_IN';
+  if (/^start\s/.test(t)) return 'START';
+  if (/^ende/.test(t)) return 'END';
+  if (/\d+:\d+\s*[-–bis]\s*\d+:\d+/.test(t)) return 'DAY_ENTRY';
+  if (/(\d+[.,]\d*|\d+)\s*(h|std)/.test(t)) return 'DAY_ENTRY';
+  if (/krank|kann nicht kommen|arzt/.test(t)) return 'KRANK';
+  if (/urlaub/.test(t)) return 'URLAUB';
+  if (/zeitausgleich|ausgleich/.test(t)) return 'ZEITAUSGLEICH';
+  if (/pause\s+\d+/.test(t)) return 'BREAK';
+  return 'UNKNOWN';
+}
+
+function getMitarbeiterReply(text, intent) {
+  const t = text.toLowerCase();
+  switch(intent) {
+    case 'ONBOARDING_OPT_IN':
+      return `✅ Willkommen! Du bist jetzt bei Rapido registriert.\n\nSchreib *Start 08:00* wenn du anfängst.`;
+    case 'START': {
+      const time = text.match(/\d{1,2}[:.]\d{2}/)?.[0] ?? '08:00';
+      return `✅ Schicht gestartet um ${time}.\n\nViel Erfolg! Schreib *Ende* wenn du fertig bist.`;
+    }
+    case 'END': {
+      const pause = text.match(/pause\s+(\d+)/i)?.[1];
+      return `✅ Schicht beendet${pause ? ` (Pause: ${pause} Min)` : ''}.\n\nArbeitszeit wurde erfasst 👍`;
+    }
+    case 'DAY_ENTRY': {
+      const range = text.match(/(\d{1,2}[:.]\d{2})\s*[-–bis]+\s*(\d{1,2}[:.]\d{2})/);
+      if (range) return `✅ Tagesbuchung gespeichert.\n\n⏰ ${range[1]} – ${range[2]}\n\nBis morgen!`;
+      const hours = text.match(/(\d+[.,]\d*|\d+)\s*(h|std)/i)?.[1];
+      return `✅ ${hours}h heute gebucht. Danke!`;
+    }
+    case 'BREAK':
+      return `✅ Pause notiert und in die heutige Schicht eingetragen.`;
+    case 'KRANK':
+      return `🤒 Gute Besserung!\n\nDeine Krankmeldung wurde weitergeleitet. Melde dich wenn du wieder fit bist.`;
+    case 'URLAUB':
+      return `🏖 Urlaubsantrag eingegangen.\n\nDein Chef prüft den Antrag und gibt dir Bescheid.`;
+    case 'ZEITAUSGLEICH':
+      return `⏱ Zeitausgleich notiert.\n\nDein Chef prüft den Antrag.`;
+    default:
+      return `🤔 Das habe ich nicht ganz verstanden.\n\nVersuche:\n• *Start 08:00* – Schicht starten\n• *Ende* – Schicht beenden\n• *Krank* – Krankmeldung\n• *8:00-17:00* – Tagesbuchung`;
+  }
+}
+
+function clearChat() {
+  document.getElementById('chat-messages').innerHTML = '';
+  chefOnboardingStep = 0;
+  markStep(0);
+}
+
+// Init
+updateSubtitle();
+</script>
