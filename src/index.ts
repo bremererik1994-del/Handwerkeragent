@@ -8,15 +8,17 @@ import { scheduleGdprCleanup } from './jobs/gdprCleanup';
 const app = express();
 
 app.use(helmet());
+const ALLOWED_ORIGINS = new Set(
+  [config.frontendUrl, process.env.CORS_EXTRA_ORIGIN].filter(Boolean) as string[],
+);
+
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow requests with no origin (local files, curl, Postman)
-    // and the configured frontend URL
-    if (!origin || origin === config.frontendUrl || origin.startsWith('file://')) {
-      cb(null, true);
-    } else {
-      cb(null, true); // allow all origins in dev/test; tighten in production
-    }
+    // no origin = curl / Postman / same-origin fetch
+    if (!origin) return cb(null, true);
+    if (config.nodeEnv !== 'production') return cb(null, true); // dev: open
+    if (ALLOWED_ORIGINS.has(origin) || origin.startsWith('file://')) return cb(null, true);
+    cb(new Error(`CORS: origin '${origin}' not allowed`));
   },
   credentials: true,
 }));

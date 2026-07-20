@@ -60,10 +60,9 @@ async function processInboundMessage(msg: WaMessage, phoneNumberId: string) {
   });
 
   if (!employee) {
-    // Check if this is a company onboarding session (new boss signing up)
     const handled = await handleCompanyOnboarding(fromPhone, text);
     if (handled) return;
-    console.log('[Webhook] unknown phone, no onboarding session:', fromPhone);
+    console.log('[Webhook] unknown phone, no onboarding session:', maskPhone(fromPhone));
     return;
   }
 
@@ -108,6 +107,22 @@ async function processInboundMessage(msg: WaMessage, phoneNumberId: string) {
     },
   });
 
+  // DSGVO-Widerruf per WhatsApp-Kommando (Art. 7 Abs. 3)
+  if (/datenschutz\s*(l[oö]schen|widerrufen|entfernen)/i.test(text)) {
+    const now = new Date();
+    const retainUntil = new Date(now);
+    retainUntil.setFullYear(retainUntil.getFullYear() + 6);
+    await prisma.employee.update({
+      where: { id: employee.id },
+      data: { gdprConsent: false, onboardingState: 'INVITED', deletedAt: now, retainUntil },
+    });
+    await wa.sendMessage({
+      to: fromPhone,
+      text: 'Deine Einwilligung wurde widerrufen und dein Konto zur Löschung vorgemerkt. Nach Ablauf der gesetzlichen Aufbewahrungsfrist (§147 AO) werden alle personenbezogenen Daten endgültig gelöscht.',
+    });
+    return;
+  }
+
   // Route by intent
   if (parsed.intent === 'ONBOARDING_OPT_IN' || parsed.intent === 'ONBOARDING_OPT_OUT') {
     await handleOnboardingIntent(employee, parsed, waMsg.id);
@@ -148,9 +163,14 @@ async function processInboundMessage(msg: WaMessage, phoneNumberId: string) {
 }
 
 function normalizePhone(phone: string): string {
-  // Ensure E.164 format with +
   if (phone.startsWith('+')) return phone;
   return '+' + phone;
+}
+
+function maskPhone(phone: string): string {
+  // Show only country code + last 3 digits for logs: +49***531
+  if (phone.length < 6) return '***';
+  return phone.slice(0, 3) + '***' + phone.slice(-3);
 }
 
 // ─── Meta Webhook Payload Types ───────────────────────────────────────────────

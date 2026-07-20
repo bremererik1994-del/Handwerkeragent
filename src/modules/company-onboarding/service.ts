@@ -12,20 +12,60 @@ const INDUSTRY_MAP: Record<string, { label: string; value: IndustryType }> = {
   'sonstiges': { label: 'Gastronomie / Sonstiges', value: 'SONSTIGES' },
 };
 
+const CONSENT_YES = new Set(['ja', 'yes', 'zustimmen', 'ok', 'akzeptieren', '✓', 'j']);
+const CONSENT_NO  = new Set(['nein', 'no', 'ablehnen', 'n']);
+
 export async function handleCompanyOnboarding(phone: string, text: string): Promise<boolean> {
   const wa = getWhatsAppProvider();
   const normalized = phone.startsWith('+') ? phone : '+' + phone;
+  const input = text.trim().toLowerCase();
 
   let session = await prisma.companyOnboardingSession.findUnique({ where: { phone: normalized } });
 
-  // First contact — start onboarding
+  // First contact — ask for DSGVO consent before anything else
   if (!session) {
     await prisma.companyOnboardingSession.create({
-      data: { phone: normalized, step: 'AWAIT_NAME' },
+      data: { phone: normalized, step: 'AWAIT_CONSENT' },
     });
     await wa.sendMessage({
       to: normalized,
-      text: `👋 Willkommen bei *Rapido* – deinem WhatsApp-Assistenten für Zeiterfassung!\n\nIch richte deinen Betrieb in wenigen Schritten ein.\n\n*Wie heißt dein Betrieb?*`,
+      text:
+        `👋 Willkommen bei *Rapido* – dein WhatsApp-Assistent für Zeiterfassung!\n\n` +
+        `Bevor wir starten, benötigen wir deine Einwilligung zur Datenverarbeitung (Art. 6 Abs. 1 lit. a DSGVO):\n\n` +
+        `Rapido speichert deinen Betriebsnamen, deine Mobilfunknummer und die Zeiterfassungsdaten deiner Mitarbeiter. ` +
+        `Diese Daten werden ausschließlich zur Erbringung des Dienstleistung genutzt und nach Vertragsende gemäß gesetzlicher Aufbewahrungsfristen gelöscht.\n\n` +
+        `📄 Datenschutzerklärung: https://rapido.app/datenschutz\n\n` +
+        `Bitte antworte mit *Ja* zum Fortfahren oder *Nein* zum Abbrechen.`,
+    });
+    return true;
+  }
+
+  if (session.step === 'AWAIT_CONSENT') {
+    if (CONSENT_NO.has(input)) {
+      await prisma.companyOnboardingSession.delete({ where: { phone: normalized } });
+      await wa.sendMessage({
+        to: normalized,
+        text: 'Verstanden. Deine Daten wurden nicht gespeichert. Falls du es dir anders überlegst, schreib uns einfach nochmal.',
+      });
+      return true;
+    }
+
+    if (!CONSENT_YES.has(input)) {
+      await wa.sendMessage({
+        to: normalized,
+        text: 'Bitte antworte mit *Ja* (zustimmen) oder *Nein* (ablehnen).',
+      });
+      return true;
+    }
+
+    // Consent given
+    await prisma.companyOnboardingSession.update({
+      where: { phone: normalized },
+      data: { step: 'AWAIT_NAME', tempData: { consentAt: new Date().toISOString() } },
+    });
+    await wa.sendMessage({
+      to: normalized,
+      text: `✅ Danke! Deine Einwilligung wurde gespeichert.\n\n*Wie heißt dein Betrieb?*`,
     });
     return true;
   }
@@ -36,9 +76,10 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
       await wa.sendMessage({ to: normalized, text: 'Bitte gib einen gültigen Betriebsnamen ein.' });
       return true;
     }
+    const tempData = session.tempData as Record<string, string>;
     await prisma.companyOnboardingSession.update({
       where: { phone: normalized },
-      data: { step: 'AWAIT_INDUSTRY', tempData: { companyName: name } },
+      data: { step: 'AWAIT_INDUSTRY', tempData: { ...tempData, companyName: name } },
     });
     await wa.sendMessage({
       to: normalized,
@@ -48,7 +89,7 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
   }
 
   if (session.step === 'AWAIT_INDUSTRY') {
-    const key = text.trim().toLowerCase();
+    const key = input;
     const industry = INDUSTRY_MAP[key];
 
     if (!industry) {
@@ -59,9 +100,8 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
       return true;
     }
 
-    const tempData = session.tempData as { companyName: string };
+    const tempData = session.tempData as { companyName: string; consentAt: string };
 
-    // Create company + owner
     const company = await prisma.company.create({
       data: {
         name: tempData.companyName,
@@ -80,7 +120,7 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
             employmentType: 'VOLLZEIT',
             onboardingState: 'ACTIVE',
             gdprConsent: true,
-            gdprConsentAt: new Date(),
+            gdprConsentAt: new Date(tempData.consentAt),
           },
         },
       },
@@ -94,12 +134,19 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
 
     await wa.sendMessage({
       to: normalized,
-      text: `✅ *${company.name}* ist jetzt bei Rapido registriert!\n\n*Branche:* ${industry.label}\n\nDu kannst jetzt Mitarbeiter einladen. Schreib mir einfach:\n👤 *Mitarbeiter: Name, +4915...* \n\nOder starte gleich mit deiner eigenen Zeiterfassung:\n⏱ *Start 08:00*`,
+      text:
+        `✅ *${company.name}* ist jetzt bei Rapido registriert!\n\n` +
+        `*Branche:* ${industry.label}\n\n` +
+        `Du kannst jetzt Mitarbeiter einladen. Schreib mir:\n` +
+        `👤 *Mitarbeiter: Name, +4915...*\n\n` +
+        `Oder starte deine eigene Zeiterfassung:\n` +
+        `⏱ *Start 08:00*\n\n` +
+        `_Du kannst deine Einwilligung jederzeit widerrufen. Schreib dazu "Datenschutz löschen"._`,
     });
     return true;
   }
 
-  // Session is DONE but employee not found — shouldn't happen, reset
+  // Session DONE but employee not found — reset
   if (session.step === 'DONE') {
     await prisma.companyOnboardingSession.delete({ where: { phone: normalized } });
   }

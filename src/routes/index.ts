@@ -232,6 +232,73 @@ router.get('/dashboard', async (req, res) => {
   }
 });
 
+// ─── DSGVO: Datenauskunft (Art. 15) + Export (Art. 20) ───────────────────────
+router.get('/gdpr/export', async (req, res) => {
+  try {
+    const { employeeId, companyId } = (req as any).user;
+
+    const employee = await prisma.employee.findFirst({
+      where: { id: employeeId, companyId, deletedAt: null },
+      include: {
+        company: { select: { name: true, industry: true } },
+        timeEntries: {
+          orderBy: { startTime: 'desc' },
+          select: { startTime: true, endTime: true, breakMinutes: true, totalMinutes: true, status: true },
+        },
+        absences: {
+          where: { deletedAt: null },
+          select: { type: true, status: true, startDate: true, endDate: true, durationDays: true },
+        },
+      },
+    });
+
+    if (!employee) { res.status(404).json({ error: 'Nicht gefunden' }); return; }
+
+    res.json({
+      exportedAt: new Date().toISOString(),
+      legalBasis: 'Art. 20 DSGVO – Recht auf Datenübertragbarkeit',
+      personalData: {
+        name: employee.name,
+        phone: employee.phone,
+        role: employee.role,
+        employmentType: employee.employmentType,
+        gdprConsent: employee.gdprConsent,
+        gdprConsentAt: employee.gdprConsentAt,
+        createdAt: employee.createdAt,
+      },
+      company: employee.company,
+      timeEntries: employee.timeEntries,
+      absences: employee.absences,
+    });
+  } catch {
+    res.status(500).json({ error: 'Export fehlgeschlagen' });
+  }
+});
+
+// DSGVO: Einwilligung widerrufen (Art. 7 Abs. 3) – setzt Consent zurück, löschmarke nach Fristablauf
+router.post('/gdpr/revoke-consent', async (req, res) => {
+  try {
+    const { employeeId, companyId, role } = (req as any).user;
+
+    // INHABER cannot self-revoke while company is active — must delete account
+    if (role === 'INHABER') {
+      res.status(400).json({
+        error: 'Als Inhaber kannst du die Einwilligung nicht einzeln widerrufen. Bitte kontaktiere den Support zur Kontolöschung.',
+      });
+      return;
+    }
+
+    await prisma.employee.update({
+      where: { id: employeeId, companyId },
+      data: { gdprConsent: false, onboardingState: 'INVITED' },
+    });
+
+    res.json({ ok: true, message: 'Einwilligung widerrufen. Deine Daten werden nach Ablauf der gesetzlichen Aufbewahrungsfristen gelöscht.' });
+  } catch {
+    res.status(500).json({ error: 'Widerruf fehlgeschlagen' });
+  }
+});
+
 // Sub-routers
 router.use('/time-entries', timetrackingRoutes);
 router.use('/locations', locationRoutes);
