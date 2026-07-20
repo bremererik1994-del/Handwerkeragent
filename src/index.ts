@@ -8,14 +8,7 @@ import { scheduleGdprCleanup } from './jobs/gdprCleanup';
 
 const app = express();
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      'script-src': ["'self'", "'unsafe-inline'"],
-    },
-  },
-}));
+app.use(helmet({ contentSecurityPolicy: false }));
 const ALLOWED_ORIGINS = new Set(
   [config.frontendUrl, process.env.CORS_EXTRA_ORIGIN].filter(Boolean) as string[],
 );
