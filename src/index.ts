@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
 import { config } from './config';
 import routes from './routes/index';
 import { scheduleGdprCleanup } from './jobs/gdprCleanup';
@@ -23,8 +24,8 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
-app.use(express.static('uploads')); // serve uploaded media
-app.use(express.static('public'));  // serve legal pages etc.
+app.use(express.static(path.join(__dirname, '..', 'uploads')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.use('/api', routes);
 
