@@ -1,38 +1,649 @@
-<!DOCTYPE html>
-<html lang="de">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Datenschutzerklärung – ZeitPilot</title>
-<style>body{font-family:-apple-system,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b;line-height:1.7}h1{color:#0284c7}h2{margin-top:2em}a{color:#0284c7}</style>
-</head>
-<body>
-<h1>Datenschutzerklärung</h1>
-<p><strong>ZeitPilot</strong> – Zeiterfassung per WhatsApp für Handwerk &amp; Einzelhandel<br>
-Stand: Juni 2026 · Verantwortlicher: Erik Bremer, bremer.erik@web.de</p>
+<title>Datenschutzerklärung – Rapido</title>
+<style>
+  :root {
+    --bg:        #F6F8FB;
+    --surface:   #FFFFFF;
+    --border:    #DDE3EE;
+    --text:      #18243A;
+    --muted:     #5B6B84;
+    --accent:    #2158D4;
+    --accent-bg: #EDF2FF;
+    --tag-bg:    #E8EDF8;
+    --shadow:    0 1px 4px rgba(33,88,212,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:        #111827;
+      --surface:   #1C2537;
+      --border:    #2C3A54;
+      --text:      #E6EAF3;
+      --muted:     #8895AE;
+      --accent:    #5B8DF6;
+      --accent-bg: #1A2540;
+      --tag-bg:    #1F2E48;
+      --shadow:    0 1px 4px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:#F6F8FB;--surface:#FFFFFF;--border:#DDE3EE;--text:#18243A;
+    --muted:#5B6B84;--accent:#2158D4;--accent-bg:#EDF2FF;--tag-bg:#E8EDF8;
+    --shadow:0 1px 4px rgba(33,88,212,.07);
+  }
+  :root[data-theme="dark"] {
+    --bg:#111827;--surface:#1C2537;--border:#2C3A54;--text:#E6EAF3;
+    --muted:#8895AE;--accent:#5B8DF6;--accent-bg:#1A2540;--tag-bg:#1F2E48;
+    --shadow:0 1px 4px rgba(0,0,0,.3);
+  }
 
-<h2>1. Zweck der Datenverarbeitung</h2>
-<p>ZeitPilot ist eine B2B-SaaS-Lösung zur digitalen Arbeitszeiterfassung. Mitarbeiter von Kundenunternehmen erfassen ihre Arbeitszeiten und Abwesenheiten per WhatsApp-Nachricht. Die Verarbeitung erfolgt ausschließlich im Auftrag des jeweiligen Arbeitgebers (Kundenunternehmen).</p>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-<h2>2. Verarbeitete Daten</h2>
-<ul>
-  <li>Name und WhatsApp-Telefonnummer der Mitarbeiter</li>
-  <li>Arbeitszeiten (Beginn, Ende, Pausen)</li>
-  <li>Abwesenheiten (Krank, Urlaub, Zeitausgleich, Sonderurlaub)</li>
-  <li>WhatsApp-Nachrichteninhalte (zur KI-gestützten Auswertung)</li>
-</ul>
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 16px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
 
-<h2>3. Rechtsgrundlagen</h2>
-<p>Die Verarbeitung von Mitarbeiterdaten erfolgt auf Grundlage von <strong>§ 26 BDSG</strong> (Beschäftigtendatenschutz) sowie der ausdrücklichen Einwilligung der Mitarbeiter in die Nutzung von WhatsApp als Kommunikationskanal (Art. 6 Abs. 1 lit. a DSGVO). Die Einwilligung kann jederzeit durch eine Nachricht mit "Nein" oder "Stop" widerrufen werden.</p>
+  /* ── Layout ── */
+  .page-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  @media (min-width: 860px) {
+    .page-wrap {
+      grid-template-columns: 220px 1fr;
+      gap: 0 48px;
+      align-items: start;
+    }
+  }
 
-<h2>4. Datenspeicherung und -löschung</h2>
-<p>Daten werden auf Servern in der EU (Frankfurt) gespeichert. Lohnrelevante Daten werden gemäß § 41 EStG und § 147 AO mindestens 6 Jahre aufbewahrt. Nach Ablauf der Aufbewahrungsfrist werden alle personenbezogenen Daten automatisch und unwiderruflich gelöscht.</p>
+  /* ── Header ── */
+  .doc-header {
+    grid-column: 1 / -1;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 36px;
+    margin-bottom: 48px;
+  }
+  .doc-eyebrow {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .doc-title {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+    text-wrap: balance;
+    margin-bottom: 14px;
+  }
+  .doc-meta {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .doc-meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--accent);
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
 
-<h2>5. Drittanbieter – WhatsApp (Meta)</h2>
-<p>Die Nachrichtenübermittlung erfolgt über die WhatsApp Business Cloud API von Meta Platforms Ireland Ltd. Meta ist im Rahmen des EU-US Data Privacy Framework zertifiziert. Es gilt der Auftragsverarbeitungsvertrag (DPA) von Meta. Weitere Informationen: <a href="https://www.whatsapp.com/legal/business-data-processing-terms" target="_blank">Meta Business Data Processing Terms</a>.</p>
+  /* ── TOC Sidebar ── */
+  .toc {
+    position: sticky;
+    top: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    display: none;
+  }
+  @media (min-width: 860px) { .toc { display: block; } }
+  .toc-title {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .toc li { counter-increment: toc; }
+  .toc a {
+    display: flex;
+    gap: 8px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 5px 6px;
+    border-radius: 5px;
+    transition: background .15s, color .15s;
+    line-height: 1.35;
+  }
+  .toc a::before {
+    content: counter(toc, decimal-leading-zero);
+    font-variant-numeric: tabular-nums;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+    padding-top: 1px;
+  }
+  .toc a:hover { background: var(--accent-bg); color: var(--text); }
 
-<h2>6. Betroffenenrechte</h2>
-<p>Mitarbeiter haben das Recht auf Auskunft, Berichtigung, Löschung und Datenübertragbarkeit. Anfragen richten Sie an: <a href="mailto:bremer.erik@web.de">bremer.erik@web.de</a></p>
+  /* ── Main Content ── */
+  .doc-body { min-width: 0; }
 
-<h2>7. Datenlöschung auf Anfrage</h2>
-<p>Zur Anforderung der Löschung Ihrer Daten wenden Sie sich an: <a href="mailto:bremer.erik@web.de">bremer.erik@web.de</a> oder nutzen Sie die im Dashboard bereitgestellte Löschfunktion.</p>
-</body>
-</html>
+  .section {
+    margin-bottom: 52px;
+    scroll-margin-top: 20px;
+  }
+
+  .section-label {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .section h2 {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    text-wrap: balance;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section h3 {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin: 28px 0 10px;
+  }
+
+  .section p {
+    color: var(--text);
+    margin-bottom: 14px;
+    max-width: 68ch;
+  }
+
+  .section ul, .section ol {
+    padding-left: 20px;
+    margin-bottom: 14px;
+    max-width: 66ch;
+  }
+  .section li {
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  /* Info box */
+  .info-box {
+    background: var(--accent-bg);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    max-width: 68ch;
+  }
+  .info-box strong { color: var(--accent); }
+
+  /* Contact card */
+  .contact-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    box-shadow: var(--shadow);
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    max-width: 440px;
+  }
+  .contact-card .name {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .contact-card .detail {
+    color: var(--muted);
+    margin-bottom: 3px;
+    display: flex;
+    gap: 8px;
+  }
+  .contact-card a { color: var(--accent); text-decoration: none; }
+  .contact-card a:hover { text-decoration: underline; }
+
+  /* Rights grid */
+  .rights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+    max-width: 720px;
+  }
+  .right-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+  .right-item .art {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .right-item .title {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .right-item .desc {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 0 52px;
+    grid-column: 1 / -1;
+  }
+
+  /* Footer */
+  .doc-footer {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--border);
+    padding-top: 28px;
+    margin-top: 20px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .doc-footer strong { color: var(--accent); font-weight: 600; }
+
+  /* Placeholder highlight */
+  mark {
+    background: #fff3cd;
+    color: #7a5200;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-family: system-ui, sans-serif;
+    font-size: 0.9em;
+  }
+  :root[data-theme="dark"] mark, @media (prefers-color-scheme: dark) { }
+
+  a { color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="page-wrap">
+
+  <!-- Header -->
+  <header class="doc-header">
+    <div class="doc-eyebrow">Rapido · Rechtliches</div>
+    <h1 class="doc-title">Datenschutzerklärung</h1>
+    <div class="doc-meta">
+      <span><span class="tag">DSGVO-konform</span></span>
+      <span>Stand: Juli 2026</span>
+      <span>Version 1.0</span>
+      <span>Gilt für: rapido.app &amp; WhatsApp-Dienst</span>
+    </div>
+  </header>
+
+  <!-- TOC -->
+  <nav class="toc" aria-label="Inhaltsverzeichnis">
+    <div class="toc-title">Inhalt</div>
+    <ol>
+      <li><a href="#s1">Verantwortlicher</a></li>
+      <li><a href="#s2">Welche Daten wir verarbeiten</a></li>
+      <li><a href="#s3">Zwecke &amp; Rechtsgrundlagen</a></li>
+      <li><a href="#s4">Drittanbieter &amp; Empfänger</a></li>
+      <li><a href="#s5">Speicherdauer &amp; Löschung</a></li>
+      <li><a href="#s6">Deine Rechte</a></li>
+      <li><a href="#s7">Widerruf der Einwilligung</a></li>
+      <li><a href="#s8">Beschwerderecht</a></li>
+      <li><a href="#s9">Änderungen</a></li>
+    </ol>
+  </nav>
+
+  <!-- Body -->
+  <main class="doc-body">
+
+    <div class="info-box">
+      <strong>Hinweis:</strong> Rapido ist ein WhatsApp-basierter Zeiterfassungsdienst für kleine Betriebe. Diese Erklärung gilt für alle Nutzer des Dienstes – Inhaber und Mitarbeiter gleichermaßen.
+    </div>
+
+    <!-- §1 -->
+    <section class="section" id="s1">
+      <div class="section-label">§ 1</div>
+      <h2>Verantwortlicher</h2>
+      <p>Verantwortlicher im Sinne der Datenschutz-Grundverordnung (DSGVO) ist:</p>
+      <div class="contact-card">
+        <div class="name">Erik Bremer · Rapido</div>
+        <div class="detail">📍 Christophorusstraße 41, 51469 Bergisch Gladbach</div>
+        <div class="detail">✉️ <a href="mailto:datenschutz@rapido.app">datenschutz@rapido.app</a></div>
+        <div class="detail">🌐 <a href="https://rapido.app">rapido.app</a></div>
+      </div>
+      <p>Bei Fragen zur Verarbeitung deiner personenbezogenen Daten wende dich jederzeit an die oben genannte Adresse.</p>
+    </section>
+
+    <!-- §2 -->
+    <section class="section" id="s2">
+      <div class="section-label">§ 2</div>
+      <h2>Welche Daten wir verarbeiten</h2>
+
+      <h3>Betriebsinhaber (bei Registrierung)</h3>
+      <ul>
+        <li>Mobilfunknummer (WhatsApp-Identität, E.164-Format)</li>
+        <li>Betriebsname und Branche</li>
+        <li>Zeitpunkt und Nachweis der DSGVO-Einwilligung</li>
+      </ul>
+
+      <h3>Mitarbeiter (nach Einladung durch den Inhaber)</h3>
+      <ul>
+        <li>Name und Mobilfunknummer</li>
+        <li>Beschäftigungsart (Vollzeit / Teilzeit / Minijob)</li>
+        <li>Stundenlohn / Verdienstgrenze (optional, für Lohnabrechnung)</li>
+        <li>Zeitstempel aller Zeitbuchungen (Start, Ende, Pausen)</li>
+        <li>Abwesenheiten (Urlaub, Krankheit, Zeitausgleich, Sonderurlaub)</li>
+        <li>WhatsApp-Nachrichteninhalte (für die Dauer der Verarbeitung, danach anonymisiert)</li>
+        <li>Zeitpunkt und Nachweis der DSGVO-Einwilligung</li>
+      </ul>
+
+      <h3>Technische Daten</h3>
+      <ul>
+        <li>Server-Logs (IP-Adresse, Zeitstempel, HTTP-Statuscodes) – ohne Personenbezug nach 7 Tagen</li>
+        <li>Meta-Nachrichten-IDs (zur Deduplizierung, kein Rückschluss auf Inhalt)</li>
+      </ul>
+    </section>
+
+    <!-- §3 -->
+    <section class="section" id="s3">
+      <div class="section-label">§ 3</div>
+      <h2>Zwecke &amp; Rechtsgrundlagen</h2>
+
+      <h3>Zeiterfassung &amp; Lohnvorbereitung</h3>
+      <p>
+        Wir verarbeiten Zeitbuchungen und Abwesenheiten zur Erfüllung des Dienstleistungsvertrags mit dem Betrieb
+        sowie zur Einhaltung gesetzlicher Aufzeichnungspflichten nach §§ 16, 17 MiLoG und § 17 ArbZG.<br>
+        <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung), lit. c (gesetzliche Pflicht).
+      </p>
+
+      <h3>WhatsApp-Kommunikation mit Mitarbeitern</h3>
+      <p>
+        Mitarbeiter kommunizieren per WhatsApp mit dem Rapido-Assistenten. Die Verarbeitung ihrer Mobilfunknummer
+        und Nachrichteninhalte erfolgt auf Grundlage ihrer ausdrücklichen Einwilligung, die vor der ersten
+        Nutzung eingeholt wird.<br>
+        <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).
+      </p>
+
+      <h3>Betriebsinhaber-Registrierung</h3>
+      <p>
+        Die Registrierung eines Betriebs per WhatsApp setzt eine aktive Einwilligung zur Datenverarbeitung voraus,
+        die als erster Schritt des Onboarding-Dialogs eingeholt und mit Zeitstempel gespeichert wird.<br>
+        <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. a DSGVO (Einwilligung), anschließend lit. b (Vertragserfüllung).
+      </p>
+
+      <h3>Aufbewahrung von Lohnunterlagen</h3>
+      <p>
+        Zeiterfassungsdaten und Lohndaten werden nach Beendigung des Beschäftigungsverhältnisses gemäß
+        § 147 AO (6 Jahre) und § 257 HGB (6 Jahre) aufbewahrt.<br>
+        <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. c DSGVO.
+      </p>
+    </section>
+
+    <!-- §4 -->
+    <section class="section" id="s4">
+      <div class="section-label">§ 4</div>
+      <h2>Drittanbieter &amp; Empfänger</h2>
+      <p>Wir setzen folgende Auftragsverarbeiter ein, mit denen Auftragsverarbeitungsverträge (AVV) nach Art. 28 DSGVO geschlossen wurden oder werden:</p>
+
+      <h3>WhatsApp / Meta Platforms Ireland Ltd.</h3>
+      <p>
+        Zustellung und Empfang von WhatsApp-Nachrichten. Sitz: Irland (EU). Nachrichten werden über die
+        Meta Cloud API übermittelt.<br>
+        Datenschutz: <a href="https://www.whatsapp.com/legal/privacy-policy" target="_blank" rel="noopener">whatsapp.com/legal/privacy-policy</a>
+      </p>
+
+      <h3>Anthropic, PBC (Claude AI)</h3>
+      <p>
+        Verarbeitung von Nachrichteninhalten zur KI-gestützten Absichtserkennung (NLP). Sitz: USA.
+        Datenübermittlung erfolgt auf Basis von Standardvertragsklauseln (SCCs) gem. Art. 46 Abs. 2 lit. c DSGVO.
+        Es werden keine personenbezogenen Daten dauerhaft bei Anthropic gespeichert.<br>
+        Datenschutz: <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">anthropic.com/privacy</a>
+      </p>
+
+      <h3>Railway Corp. (Serverhosting)</h3>
+      <p>
+        Hosting des Rapido-Backends. Sitz: USA. Datenübermittlung auf Basis von SCCs.<br>
+        Datenschutz: <a href="https://railway.app/legal/privacy" target="_blank" rel="noopener">railway.app/legal/privacy</a>
+      </p>
+
+      <h3>Neon Inc. (Datenbankhosting)</h3>
+      <p>
+        PostgreSQL-Datenbankhosting (serverless). Sitz: USA. Datenübermittlung auf Basis von SCCs.
+        Datenspeicherung in der EU-Region (Frankfurt) soweit verfügbar.<br>
+        Datenschutz: <a href="https://neon.tech/privacy-policy" target="_blank" rel="noopener">neon.tech/privacy-policy</a>
+      </p>
+
+      <p>Eine Weitergabe an sonstige Dritte oder zu Werbezwecken findet nicht statt.</p>
+    </section>
+
+    <!-- §5 -->
+    <section class="section" id="s5">
+      <div class="section-label">§ 5</div>
+      <h2>Speicherdauer &amp; Löschung</h2>
+
+      <h3>Aktive Mitarbeiter</h3>
+      <p>Daten werden für die Dauer des aktiven Beschäftigungsverhältnisses gespeichert.</p>
+
+      <h3>Nach Kündigung / Löschung</h3>
+      <p>
+        Bei Löschung eines Mitarbeiters wird der Datensatz sofort für die weitere Nutzung gesperrt (Soft-Delete).
+        Die gesetzliche Aufbewahrungsfrist von <strong>6 Jahren</strong> beginnt mit Ende des Geschäftsjahres der letzten Buchung (§ 147 AO).
+        Nach Ablauf dieser Frist erfolgt die vollständige, unwiderrufliche Löschung automatisch durch den GDPR-Cleanup-Job.
+      </p>
+
+      <h3>WhatsApp-Nachrichteninhalte</h3>
+      <p>
+        Nachrichteninhalte (Freitext) werden nach <strong>90 Tagen</strong> automatisch anonymisiert.
+        Der Buchungsdatensatz (Zeitstempel, Intent) bleibt für die Aufbewahrungspflicht erhalten.
+      </p>
+
+      <h3>Onboarding-Daten ohne Abschluss</h3>
+      <p>Wenn ein Registrierungsvorgang nicht abgeschlossen wird, werden temporäre Sitzungsdaten nach <strong>30 Tagen</strong> automatisch gelöscht.</p>
+
+      <h3>Server-Logs</h3>
+      <p>Technische Zugriffsprotokolle werden nach 7 Tagen gelöscht.</p>
+    </section>
+
+    <!-- §6 -->
+    <section class="section" id="s6">
+      <div class="section-label">§ 6</div>
+      <h2>Deine Rechte</h2>
+      <p>Du hast gegenüber Rapido folgende Rechte bezüglich deiner personenbezogenen Daten:</p>
+
+      <div class="rights-grid">
+        <div class="right-item">
+          <div class="art">Art. 15 DSGVO</div>
+          <div class="title">Auskunftsrecht</div>
+          <div class="desc">Du kannst jederzeit Auskunft über alle gespeicherten Daten verlangen.</div>
+        </div>
+        <div class="right-item">
+          <div class="art">Art. 16 DSGVO</div>
+          <div class="title">Berichtigung</div>
+          <div class="desc">Unrichtige Daten werden auf Anfrage unverzüglich korrigiert.</div>
+        </div>
+        <div class="right-item">
+          <div class="art">Art. 17 DSGVO</div>
+          <div class="title">Löschung</div>
+          <div class="desc">Löschung soweit keine gesetzlichen Aufbewahrungspflichten entgegenstehen.</div>
+        </div>
+        <div class="right-item">
+          <div class="art">Art. 18 DSGVO</div>
+          <div class="title">Einschränkung</div>
+          <div class="desc">Du kannst die Verarbeitung unter bestimmten Voraussetzungen einschränken lassen.</div>
+        </div>
+        <div class="right-item">
+          <div class="art">Art. 20 DSGVO</div>
+          <div class="title">Datenportabilität</div>
+          <div class="desc">Export aller deiner Daten als maschinenlesbares JSON – per API oder auf Anfrage.</div>
+        </div>
+        <div class="right-item">
+          <div class="art">Art. 21 DSGVO</div>
+          <div class="title">Widerspruch</div>
+          <div class="desc">Du kannst der Verarbeitung auf Basis berechtigter Interessen widersprechen.</div>
+        </div>
+      </div>
+
+      <p>
+        Zur Ausübung deiner Rechte wende dich per WhatsApp-Nachricht an den Rapido-Assistenten oder per E-Mail an
+        <a href="mailto:datenschutz@rapido.app">datenschutz@rapido.app</a>.
+      </p>
+
+      <div class="info-box">
+        <strong>Datenexport per WhatsApp:</strong> Schreib dem Rapido-Assistenten einfach
+        <em>„Meine Daten exportieren"</em> – du erhältst einen vollständigen Auszug aller deiner Daten (Art. 20 DSGVO).
+      </div>
+    </section>
+
+    <!-- §7 -->
+    <section class="section" id="s7">
+      <div class="section-label">§ 7</div>
+      <h2>Widerruf der Einwilligung</h2>
+      <p>
+        Du kannst deine Einwilligung zur Datenverarbeitung jederzeit mit Wirkung für die Zukunft widerrufen.
+        Der Widerruf berührt nicht die Rechtmäßigkeit der bis dahin erfolgten Verarbeitung.
+      </p>
+      <p>So widerrufst du:</p>
+      <ul>
+        <li><strong>Per WhatsApp:</strong> Schreib dem Rapido-Assistenten <em>„Datenschutz löschen"</em></li>
+        <li><strong>Per E-Mail:</strong> <a href="mailto:datenschutz@rapido.app">datenschutz@rapido.app</a></li>
+      </ul>
+      <p>
+        Nach dem Widerruf kannst du den Dienst nicht mehr nutzen. Deine Daten werden sofort für die weitere
+        Verarbeitung gesperrt und nach Ablauf der gesetzlichen Aufbewahrungspflichten endgültig gelöscht.
+      </p>
+    </section>
+
+    <!-- §8 -->
+    <section class="section" id="s8">
+      <div class="section-label">§ 8</div>
+      <h2>Beschwerderecht bei der Aufsichtsbehörde</h2>
+      <p>
+        Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Die zuständige Behörde
+        richtet sich nach deinem Wohnsitz oder dem Sitz des Unternehmens.
+      </p>
+      <p>Zuständige Behörde für Bayern:</p>
+      <div class="contact-card">
+        <div class="name">Bayerisches Landesamt für Datenschutzaufsicht (BayLDA)</div>
+        <div class="detail">📍 Promenade 27, 91522 Ansbach</div>
+        <div class="detail">🌐 <a href="https://www.lda.bayern.de" target="_blank" rel="noopener">lda.bayern.de</a></div>
+        <div class="detail">✉️ <a href="mailto:poststelle@lda.bayern.de">poststelle@lda.bayern.de</a></div>
+      </div>
+      <p>
+        Eine Liste aller deutschen Aufsichtsbehörden findest du unter:
+        <a href="https://www.bfdi.bund.de/DE/Infothek/Anschriften_Links/anschriften_links-node.html" target="_blank" rel="noopener">bfdi.bund.de</a>
+      </p>
+    </section>
+
+    <!-- §9 -->
+    <section class="section" id="s9">
+      <div class="section-label">§ 9</div>
+      <h2>Änderungen dieser Erklärung</h2>
+      <p>
+        Wir behalten uns vor, diese Datenschutzerklärung bei wesentlichen Änderungen der Datenverarbeitung
+        oder bei Gesetzesänderungen anzupassen. Die jeweils aktuelle Version ist stets unter
+        <a href="https://rapido.app/datenschutz">rapido.app/datenschutz</a> abrufbar.
+      </p>
+      <p>
+        Bei wesentlichen Änderungen, die deine Rechte betreffen, wirst du aktiv per WhatsApp informiert
+        und gebeten, deine Einwilligung zu erneuern.
+      </p>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="doc-footer">
+    <span>© 2026 Rapido · <strong>rapido.app/datenschutz</strong></span>
+    <span>Stand: Juli 2026 · Version 1.0</span>
+  </footer>
+
+</div>
+
+<script>
+  // Smooth scroll for TOC links
+  document.querySelectorAll('.toc a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
