@@ -229,14 +229,14 @@
       <div class="card">
         <div class="card-header"><div class="dot orange" id="dot-chef"></div>Chef-Onboarding</div>
         <div class="card-body">
-          <div class="step-indicator"><div class="step-num" id="step1">1</div>Erste Nachricht → DSGVO-Einwilligung</div>
-          <div class="step-indicator"><div class="step-num" id="step2">2</div>Dein Name (Vor- + Nachname)</div>
-          <div class="step-indicator"><div class="step-num" id="step3">3</div>Betrieb + Rechtsform</div>
-          <div class="step-indicator"><div class="step-num" id="step4">4</div>Branche + Gewerk (bei Handwerk)</div>
-          <div class="step-indicator"><div class="step-num" id="step5">5</div>Mitarbeiteranzahl + Erinnerungen</div>
-          <div class="step-indicator"><div class="step-num" id="step6">6</div>Stundenzettel + Baustellen</div>
-          <div class="step-indicator"><div class="step-num done">✓</div>Betrieb ist angelegt!</div>
-          <div style="font-size:11px;color:var(--text-meta);margin-top:4px;">Schreib einfach los — z.B. "Hallo"</div>
+          <div class="step-indicator"><div class="step-num" id="step1">1</div>Dein Name + Betrieb</div>
+          <div class="step-indicator"><div class="step-num" id="step2">2</div>Branche + Gewerk (bei Handwerk)</div>
+          <div class="step-indicator"><div class="step-num" id="step3">3</div>Mitarbeiteranzahl</div>
+          <div class="step-indicator"><div class="step-num" id="step4">4</div>Erinnerungen + Stundenzettel</div>
+          <div class="step-indicator"><div class="step-num" id="step5">5</div>Baustellen</div>
+          <div class="step-indicator"><div class="step-num" id="step6">6</div>DSGVO + Weiterleitung</div>
+          <div class="step-indicator"><div class="step-num done">✓</div>Betrieb eingerichtet</div>
+          <div style="font-size:11px;color:var(--text-meta);margin-top:4px;">Schreib einfach los — z.B. „Hallo"</div>
         </div>
       </div>
     </div>
@@ -304,12 +304,8 @@
 const BASE = '/api';
 let currentRole = 'chef';
 let currentPhone = '+4915780000001';
-// Tracks the conversation turn (each user message increments by 1)
-// 0=start, 1=consent asked, 2=name asked, 3=name confirmed, 4=company name asked,
-// 5=business form asked, 6=industry asked, 7=gewerk/employees asked, 8=employees asked,
-// 9=reminder asked, 10=reminder time asked, 11=stundenzettel asked, 12=baustelle asked, 13=done
 let chefStep = 0;
-let chefLastInput = ''; // remember last input to build context replies
+let chefData = {};
 
 function ts() {
   return new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
@@ -406,12 +402,9 @@ function sendQuick(text) {
 async function simulateSend(text) {
   addMessage(text, 'sent');
 
-  // Update step indicator for chef flow
   if (currentRole === 'chef') {
-    chefLastInput = text;
-    if (chefStep < 13) chefStep++;
-    // Map conversation step → panel milestone (1–6)
-    const panelStep = chefStep <= 1 ? 1 : chefStep <= 3 ? 2 : chefStep <= 6 ? 3 : chefStep <= 8 ? 4 : chefStep <= 11 ? 5 : 6;
+    if (chefStep < 11) chefStep++;
+    const panelStep = chefStep <= 2 ? 1 : chefStep <= 4 ? 2 : chefStep === 5 ? 3 : chefStep <= 7 ? 4 : chefStep === 8 ? 5 : 6;
     markStep(panelStep);
   }
 
@@ -451,14 +444,18 @@ async function simulateSend(text) {
 
     if (res.ok) {
       const intent = currentRole === 'chef' ? null : guessIntent(text);
-      const reply = currentRole === 'chef'
-        ? getChefReply(text, chefStep)
-        : getMitarbeiterReply(text, intent);
-      addMessage(reply, 'received', intent, 'Rapido Bot');
-
-      if (currentRole === 'chef' && chefStep >= 13) {
-        setTimeout(() => addSystemMsg('✅ Betrieb wurde im Backend angelegt!'), 500);
-        document.getElementById('dot-chef').classList.replace('orange', 'green');
+      if (currentRole === 'chef') {
+        const replies = getChefReply(text, chefStep);
+        const msgs = Array.isArray(replies) ? replies : [replies];
+        msgs.forEach((m, i) => setTimeout(() => addMessage(m, 'received', null, 'Rapido Bot'), i * 800));
+        if (chefStep >= 10) {
+          setTimeout(() => {
+            addSystemMsg('✅ Betrieb wurde im Backend angelegt!');
+            document.getElementById('dot-chef').classList.replace('orange', 'green');
+          }, msgs.length * 800 + 300);
+        }
+      } else {
+        addMessage(getMitarbeiterReply(text, intent), 'received', intent, 'Rapido Bot');
       }
     } else {
       document.getElementById('typing-indicator')?.remove();
@@ -482,60 +479,89 @@ function markStep(n) {
 function getChefReply(text, step) {
   const t = text.trim();
   switch (step) {
-    case 1:
-      return `👋 Hallo! Ich bin *Rapido* – dein digitaler Assistent für Zeiterfassung per WhatsApp.\n\nKein App-Download, kein Papierkram. Deine Mitarbeiter schicken einfach eine WhatsApp – fertig.\n\nIch richte deinen Betrieb in 2 Minuten ein. Bevor wir starten:\n\n📋 *Datenschutz (DSGVO Art. 6):*\nRapido speichert deinen Namen, deine Mobilnummer und Zeiterfassungsdaten deiner Mitarbeiter – ausschließlich zur Erbringung des Dienstes.\n\n📄 Mehr: rapido-handwerk.net/datenschutz\n\nAntworte mit *Ja* zum Starten oder *Nein* zum Abbrechen.`;
-    case 2:
-      return `✅ Super, los geht's!\n\n*Wie heißt du?*\nBitte schreib deinen Vor- und Nachnamen. (z.B. "Max Mustermann")`;
-    case 3: {
+    case 1: {
       const parts = t.split(/\s+/);
-      if (parts.length < 2) return `Und dein *Nachname*, ${parts[0]}?`;
-      return `Hallo, *${t}* 👋\n\nIst das korrekt? (Ja / Nein)`;
+      if (parts.length < 2) { chefData.vorname = parts[0]; chefStep--; return `Und dein Nachname, ${parts[0]}?`; }
+      chefData.vorname = parts[0]; chefData.nachname = parts.slice(1).join(' ');
+      return `Hallo, ${t}! 👋\n\nWie heißt dein Betrieb?`;
     }
-    case 4:
-      if (/^(nein|n|falsch)/i.test(t)) return `Kein Problem! Wie heißt du? (Vor- und Nachname)`;
-      return `Perfekt! ✅\n\n*Wie heißt dein Betrieb?*\n\nBitte nenn mir auch die Rechtsform:\n\n1️⃣ Einzelunternehmen\n2️⃣ GbR\n3️⃣ GmbH\n4️⃣ UG (haftungsbeschränkt)\n5️⃣ KG\n6️⃣ OHG\n7️⃣ Sonstiges\n\n_Erst Betriebsname eingeben, dann Rechtsform._`;
-    case 5:
-      return `*${t}* – gut! 💪\n\nUnd die *Rechtsform*?\n\n1️⃣ Einzelunternehmen\n2️⃣ GbR\n3️⃣ GmbH\n4️⃣ UG\n5️⃣ KG\n6️⃣ OHG\n7️⃣ Sonstiges`;
+    case 2:
+      chefData.betrieb = t;
+      return `In welcher Branche bist du tätig?\n\n1️⃣ Handwerk\n2️⃣ Einzelhandel\n3️⃣ Gastronomie oder Sonstiges`;
+    case 3: {
+      const isHW = /^(1|handwerk)/i.test(t);
+      chefData.branche = isHW ? 'Handwerk' : (t === '2' ? 'Einzelhandel' : 'Gastronomie/Sonstiges');
+      if (isHW) return `Welches Gewerk?\n\n1️⃣ Elektro\n2️⃣ Sanitär / Heizung / Klima\n3️⃣ Maler / Lackierer\n4️⃣ Maurer / Hochbau\n5️⃣ Zimmerer / Holzbau\n6️⃣ Dachdecker\n7️⃣ Fliesenleger\n8️⃣ Schreiner / Tischler\n9️⃣ Kfz / Mechatronik\n🔟 Garten- und Landschaftsbau\n1️⃣1️⃣ Sonstiges Handwerk`;
+      chefStep++;
+      return `Wie viele Mitarbeiter hat dein Betrieb?`;
+    }
+    case 4: {
+      const gm = {'1':'Elektro','2':'Sanitär/Heizung/Klima','3':'Maler/Lackierer','4':'Maurer/Hochbau','5':'Zimmerer/Holzbau','6':'Dachdecker','7':'Fliesenleger','8':'Schreiner/Tischler','9':'Kfz/Mechatronik','10':'Garten- und Landschaftsbau','11':'Sonstiges Handwerk'};
+      if (chefData.branche === 'Handwerk' && gm[t]) { chefData.gewerk = gm[t]; return `Wie viele Mitarbeiter hat dein Betrieb?`; }
+      chefData.mitarbeiter = t;
+      return `Wir erinnern deine Mitarbeiter täglich um 18:00 Uhr, wenn eine Zeitbuchung fehlt.\n\nWenn du eine andere Uhrzeit möchtest, nenn sie mir einfach. Oder schreib *Nein*, um die automatische Erinnerung zu deaktivieren.`;
+    }
+    case 5: {
+      if (chefData.branche === 'Handwerk' && !chefData.mitarbeiter) {
+        chefData.mitarbeiter = t;
+        return `Wir erinnern deine Mitarbeiter täglich um 18:00 Uhr, wenn eine Zeitbuchung fehlt.\n\nWenn du eine andere Uhrzeit möchtest, nenn sie mir einfach. Oder schreib *Nein*, um die automatische Erinnerung zu deaktivieren.`;
+      }
+      const tm = t.match(/(\d{1,2}[:.]\d{2})/);
+      chefData.reminder = /^(nein|n)/i.test(t) ? null : (tm ? tm[0].replace('.', ':') : '18:00');
+      const info = chefData.reminder ? `Erinnerungen gehen täglich um ${chefData.reminder} Uhr raus.` : `Automatische Erinnerungen sind deaktiviert.`;
+      return `${info}\n\nUnterschreiben eure Kunden Stundenzettel als Nachweis? Dann kann dein Mitarbeiter das Dokument direkt per WhatsApp als Foto einschicken – Rapido speichert es automatisch und du kannst es jederzeit abrufen.\n\nJa oder Nein?`;
+    }
     case 6: {
-      const forms = {'1':'Einzelunternehmen','2':'GbR','3':'GmbH','4':'UG','5':'KG','6':'OHG','7':'Sonstiges','gmbh':'GmbH','gbr':'GbR','ug':'UG','kg':'KG'};
-      const form = forms[t.toLowerCase()] ?? t;
-      return `*${chefLastInput}* als *${form}* – notiert! ✅\n\n*In welcher Branche bist du tätig?*\n\n1️⃣ Handwerk\n2️⃣ Einzelhandel\n3️⃣ Gastronomie / Sonstiges`;
+      if (chefData.branche === 'Handwerk' && chefData.reminder === undefined) {
+        const tm = t.match(/(\d{1,2}[:.]\d{2})/);
+        chefData.reminder = /^(nein|n)/i.test(t) ? null : (tm ? tm[0].replace('.', ':') : '18:00');
+        const info = chefData.reminder ? `Erinnerungen gehen täglich um ${chefData.reminder} Uhr raus.` : `Automatische Erinnerungen sind deaktiviert.`;
+        return `${info}\n\nUnterschreiben eure Kunden Stundenzettel als Nachweis? Dann kann dein Mitarbeiter das Dokument direkt per WhatsApp als Foto einschicken – Rapido speichert es automatisch und du kannst es jederzeit abrufen.\n\nJa oder Nein?`;
+      }
+      chefData.stundenzettel = /^(ja|j|ok)/i.test(t);
+      return `Möchtest du auch das Baustellenmanagement aktivieren?\n\nDeine Mitarbeiter nennen bei jeder Buchung die Baustelle – du siehst jederzeit, wer wo arbeitet. Das ist außerdem die Grundlage für weitere Funktionen wie Baustellenberichte und Auswertungen je Projekt.\n\nJa oder Nein?`;
     }
     case 7: {
-      const isHandwerk = /^(1|handwerk)/i.test(t);
-      if (isHandwerk) return `Handwerk – super! 🔧\n\n*Welches Gewerk?*\n\n1️⃣ Elektro\n2️⃣ Sanitär / Heizung / Klima\n3️⃣ Maler / Lackierer\n4️⃣ Maurer / Hochbau\n5️⃣ Zimmerer / Holzbau\n6️⃣ Dachdecker\n7️⃣ Fliesenleger\n8️⃣ Schreiner / Tischler\n9️⃣ Kfz / Mechatronik\n🔟 Garten- und Landschaftsbau\n1️⃣1️⃣ Sonstiges Handwerk`;
-      return `*${t === '2' ? 'Einzelhandel' : 'Gastronomie / Sonstiges'}* – notiert! ✅\n\n*Wie viele Mitarbeiter* hat dein Betrieb ungefähr?\n_(z.B. "3", "5–10", "ca. 8")_`;
+      if (chefData.branche === 'Handwerk' && chefData.stundenzettel === undefined) {
+        chefData.stundenzettel = /^(ja|j|ok)/i.test(t);
+        return `Möchtest du auch das Baustellenmanagement aktivieren?\n\nDeine Mitarbeiter nennen bei jeder Buchung die Baustelle – du siehst jederzeit, wer wo arbeitet. Das ist außerdem die Grundlage für weitere Funktionen wie Baustellenberichte und Auswertungen je Projekt.\n\nJa oder Nein?`;
+      }
+      chefData.baustelle = /^(ja|j|ok)/i.test(t);
+      return `Fast fertig!\n\nBevor ich alles speichere, kurz zum Datenschutz:\n\nRapido speichert deinen Namen, deine Mobilnummer sowie die Zeiterfassungsdaten deiner Mitarbeiter – ausschließlich zur Erbringung des Dienstes (DSGVO Art. 6 Abs. 1b). Du kannst deine Einwilligung jederzeit widerrufen.\n\n📄 rapido-handwerk.net/datenschutz\n\nSchreib *Ja* zum Speichern oder *Nein* zum Abbrechen.`;
     }
     case 8: {
-      const gewerkMap = {'1':'Elektro','2':'Sanitär/Heizung/Klima','3':'Maler/Lackierer','4':'Maurer/Hochbau','5':'Zimmerer/Holzbau','6':'Dachdecker','7':'Fliesenleger','8':'Schreiner/Tischler','9':'Kfz/Mechatronik','10':'Garten- und Landschaftsbau','11':'Sonstiges Handwerk'};
-      const gewerk = gewerkMap[t] ?? t;
-      // Could be gewerk answer or employee count
-      if (/\d/.test(t) && parseInt(t) <= 11 && gewerkMap[t]) {
-        return `*${gewerk}* – perfekt! 🔧\n\n*Wie viele Mitarbeiter* hat dein Betrieb ungefähr?\n_(z.B. "3", "5–10", "ca. 8")_`;
+      if (chefData.branche === 'Handwerk' && chefData.baustelle === undefined) {
+        chefData.baustelle = /^(ja|j|ok)/i.test(t);
+        return `Fast fertig!\n\nBevor ich alles speichere, kurz zum Datenschutz:\n\nRapido speichert deinen Namen, deine Mobilnummer sowie die Zeiterfassungsdaten deiner Mitarbeiter – ausschließlich zur Erbringung des Dienstes (DSGVO Art. 6 Abs. 1b). Du kannst deine Einwilligung jederzeit widerrufen.\n\n📄 rapido-handwerk.net/datenschutz\n\nSchreib *Ja* zum Speichern oder *Nein* zum Abbrechen.`;
       }
-      return `*${t} Mitarbeiter* – notiert! ✅\n\n💡 *Empfehlung:* Sollen Mitarbeiter automatisch erinnert werden, wenn eine Zeitbuchung fehlt?\n\nAntworte mit *Ja* (empfohlen) oder *Nein*.`;
+      if (/^(nein|n)/i.test(t)) { chefStep = 0; chefData = {}; return `Kein Problem. Ohne Einwilligung werden keine Daten gespeichert. Du kannst jederzeit neu starten. 👋`; }
+      return finishChefOnboarding();
     }
     case 9:
-      return `*${t} Mitarbeiter* – notiert! ✅\n\n💡 *Empfehlung:* Sollen Mitarbeiter automatisch erinnert werden, wenn eine Zeitbuchung fehlt?\n\nAntworte mit *Ja* (empfohlen) oder *Nein*.`;
-    case 10:
-      if (/^(ja|j|ok)/i.test(t)) return `Gute Wahl! ⏰\n\n*Wann soll die Erinnerung rausgehen?*\n_(z.B. "17:00" oder "18:30")_`;
-      return `Alles klar.\n\nℹ️ Du wirst benachrichtigt, wenn Mitarbeiter das Onboarding nicht abschließen.\n\n📋 *Stundenzettel:* Braucht ihr Nachweise für eure Kunden?\nWillst du Stundenzettel als Foto speichern und abrufen können?\n\nAntworte mit *Ja* oder *Nein*.`;
-    case 11:
-      return `⏰ Erinnerungen um *${t} Uhr* – eingestellt!\n\nℹ️ Du wirst benachrichtigt, wenn Mitarbeiter das Onboarding nicht abschließen.\n\n📋 *Stundenzettel:* Braucht ihr Nachweise für eure Kunden?\nWillst du Stundenzettel als Foto speichern und abrufen können?\n\nAntworte mit *Ja* oder *Nein*.`;
-    case 12:
-      return `🏗 *Baustellenmanagement:*\n\nWillst du, dass deine Mitarbeiter bei jeder Buchung auch die Baustelle nennen?\n\nDas gibt dir einen Überblick, wer wo arbeitet.\n\nAntworte mit *Ja* oder *Nein*.`;
-    case 13: {
-      const baustelle = /^(ja|j|ok)/i.test(t);
-      return `🎉 *Dein Betrieb ist jetzt bei Rapido registriert!*\n\n` +
-        (baustelle ? `🏗 Baustellenmanagement: aktiviert\n` : '') +
-        `\n*So geht's weiter:*\n` +
-        `👤 Mitarbeiter einladen: _"Mitarbeiter: Name, +4915..."_\n` +
-        `⏱ Eigene Zeit buchen: _"Start 08:00"_\n\n` +
-        `_Einwilligung jederzeit widerrufen: "Datenschutz löschen"_`;
+    case 10: {
+      if (/^(nein|n)/i.test(t)) { chefStep = 0; chefData = {}; return `Kein Problem. Ohne Einwilligung werden keine Daten gespeichert. Du kannst jederzeit neu starten. 👋`; }
+      return finishChefOnboarding();
     }
     default:
-      return '✅ Betrieb bereits eingerichtet! Du kannst jetzt Zeiten buchen.';
+      return 'Dein Betrieb ist bereits eingerichtet. Schreib „Start 08:00" um deine Zeit zu buchen.';
   }
+}
+
+function finishChefOnboarding() {
+  const name = `${chefData.vorname} ${chefData.nachname}`;
+  const summary =
+    `🎉 *${chefData.betrieb} ist jetzt bei Rapido eingerichtet!*\n\n` +
+    (chefData.gewerk ? `🔧 ${chefData.gewerk}\n` : '') +
+    `👥 ${chefData.mitarbeiter} Mitarbeiter\n` +
+    (chefData.reminder ? `⏰ Erinnerung täglich um ${chefData.reminder} Uhr\n` : '') +
+    (chefData.stundenzettel ? `📋 Stundenzettel: aktiv\n` : '') +
+    (chefData.baustelle ? `🏗 Baustellenmanagement: aktiv\n` : '');
+  const forward =
+    `Leite diese Nachricht an deine Mitarbeiter weiter:\n\n——————————————\n` +
+    `Dein Chef hat sich für *Rapido* entschieden. Damit können endlich die rechtlichen Vorschriften eingehalten werden und dein Chef hat weniger Arbeit mit den lästigen Stundenzetteln.\n\n` +
+    `Schreib eine Nachricht an die folgende Nummer – unter der du auch in Zukunft deine Zeitbuchungen vornimmst:\n\n` +
+    `📱 *+49 XXX XXXXXXX*\n\n– ${name}, ${chefData.betrieb}\n——————————————`;
+  return [summary, forward];
 }
 
 function guessIntent(text) {
@@ -587,7 +613,7 @@ function getMitarbeiterReply(text, intent) {
 function clearChat() {
   document.getElementById('chat-messages').innerHTML = '';
   chefStep = 0;
-  chefLastInput = '';
+  chefData = {};
   markStep(0);
   document.getElementById('dot-chef')?.classList.replace('green', 'orange');
 }

@@ -15,67 +15,28 @@ const INDUSTRY_MAP: Record<string, { label: string; value: IndustryType }> = {
 };
 
 const GEWERK_MAP: Record<string, string> = {
-  '1': 'Elektro',
-  'elektro': 'Elektro',
-  '2': 'Sanitär / Heizung / Klima (SHK)',
-  'shk': 'Sanitär / Heizung / Klima (SHK)',
-  'sanitär': 'Sanitär / Heizung / Klima (SHK)',
-  'heizung': 'Sanitär / Heizung / Klima (SHK)',
-  '3': 'Maler / Lackierer',
-  'maler': 'Maler / Lackierer',
-  '4': 'Maurer / Hochbau',
-  'maurer': 'Maurer / Hochbau',
-  'hochbau': 'Maurer / Hochbau',
-  '5': 'Zimmerer / Holzbau',
-  'zimmerer': 'Zimmerer / Holzbau',
-  'holzbau': 'Zimmerer / Holzbau',
-  '6': 'Dachdecker',
-  'dachdecker': 'Dachdecker',
-  '7': 'Fliesenleger',
-  'fliesenleger': 'Fliesenleger',
-  '8': 'Schreiner / Tischler',
-  'schreiner': 'Schreiner / Tischler',
-  'tischler': 'Schreiner / Tischler',
-  '9': 'Kfz / Mechatronik',
-  'kfz': 'Kfz / Mechatronik',
-  '10': 'Garten- und Landschaftsbau',
-  'garten': 'Garten- und Landschaftsbau',
+  '1': 'Elektro', 'elektro': 'Elektro',
+  '2': 'Sanitär / Heizung / Klima', 'shk': 'Sanitär / Heizung / Klima', 'sanitär': 'Sanitär / Heizung / Klima',
+  '3': 'Maler / Lackierer', 'maler': 'Maler / Lackierer',
+  '4': 'Maurer / Hochbau', 'maurer': 'Maurer / Hochbau',
+  '5': 'Zimmerer / Holzbau', 'zimmerer': 'Zimmerer / Holzbau',
+  '6': 'Dachdecker', 'dachdecker': 'Dachdecker',
+  '7': 'Fliesenleger', 'fliesenleger': 'Fliesenleger',
+  '8': 'Schreiner / Tischler', 'schreiner': 'Schreiner / Tischler', 'tischler': 'Schreiner / Tischler',
+  '9': 'Kfz / Mechatronik', 'kfz': 'Kfz / Mechatronik',
+  '10': 'Garten- und Landschaftsbau', 'garten': 'Garten- und Landschaftsbau',
   '11': 'Sonstiges Handwerk',
-  'sonstiges': 'Sonstiges Handwerk',
 };
 
-const BUSINESS_FORMS: Record<string, string> = {
-  'einzelunternehmen': 'Einzelunternehmen',
-  'einzelunternehmer': 'Einzelunternehmen',
-  'eu': 'Einzelunternehmen',
-  '1': 'Einzelunternehmen',
-  'gbr': 'GbR',
-  '2': 'GbR',
-  'gmbh': 'GmbH',
-  '3': 'GmbH',
-  'ug': 'UG (haftungsbeschränkt)',
-  '4': 'UG (haftungsbeschränkt)',
-  'kg': 'KG',
-  '5': 'KG',
-  'ohg': 'OHG',
-  '6': 'OHG',
-  'sonstiges': 'Sonstiges',
-  '7': 'Sonstiges',
-};
-
-const CONSENT_YES = new Set(['ja', 'yes', 'zustimmen', 'ok', 'akzeptieren', '✓', 'j', 'okay']);
-const CONSENT_NO  = new Set(['nein', 'no', 'ablehnen', 'n']);
-const CONFIRM_YES = new Set(['ja', 'yes', 'j', 'ok', 'okay', 'stimmt', 'richtig', 'korrekt', '✓']);
-const CONFIRM_NO  = new Set(['nein', 'no', 'n', 'falsch', 'korrigieren', 'ändern']);
+const YES = new Set(['ja', 'yes', 'j', 'ok', 'okay', '✓', 'zustimmen', 'akzeptieren', 'stimmt', 'richtig', 'korrekt']);
+const NO  = new Set(['nein', 'no', 'n', 'ablehnen', 'falsch', 'korrigieren', 'ändern']);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface TempData {
-  consentAt?: string;
   ownerFirstName?: string;
   ownerLastName?: string;
   companyName?: string;
-  businessForm?: string;
   industry?: IndustryType;
   industryLabel?: string;
   gewerk?: string;
@@ -97,173 +58,77 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
 
   let session = await prisma.companyOnboardingSession.findUnique({ where: { phone: normalized } });
 
-  // ── Erster Kontakt: DSGVO-Einwilligung einholen ────────────────────────────
+  // ── Erster Kontakt → Name fragen (DSGVO kommt am Ende) ────────────────────
   if (!session) {
     await prisma.companyOnboardingSession.create({
-      data: { phone: normalized, step: 'AWAIT_CONSENT' },
+      data: { phone: normalized, step: 'AWAIT_OWNER_NAME' },
     });
     await wa.sendMessage({
       to: normalized,
       text:
-        `👋 Hallo! Ich bin *Rapido* – dein digitaler Assistent für Zeiterfassung per WhatsApp.\n\n` +
-        `Kein App-Download, kein Papierkram. Deine Mitarbeiter schicken einfach eine WhatsApp – fertig.\n\n` +
-        `Ich richte deinen Betrieb in 2 Minuten ein. Bevor wir starten:\n\n` +
-        `📋 *Datenschutz (DSGVO Art. 6):*\n` +
-        `Rapido speichert deinen Namen, deine Mobilnummer und Zeiterfassungsdaten deiner Mitarbeiter – ausschließlich zur Erbringung des Dienstes.\n\n` +
-        `📄 Mehr: rapido-handwerk.net/datenschutz\n\n` +
-        `Antworte mit *Ja* zum Starten oder *Nein* zum Abbrechen.`,
+        `👋 Hallo! Ich bin *Rapido* – deine digitale Zeiterfassung per WhatsApp.\n\n` +
+        `Kein App-Download, kein Papierkram. Deine Mitarbeiter schicken einfach eine WhatsApp – das war's.\n\n` +
+        `Ich richte deinen Betrieb jetzt ein. Wie heißt du? Bitte schreib Vor- und Nachname.`,
     });
     return true;
   }
 
   const temp = (session.tempData ?? {}) as TempData;
 
-  // ── AWAIT_CONSENT ──────────────────────────────────────────────────────────
-  if (session.step === 'AWAIT_CONSENT') {
-    if (CONSENT_NO.has(lower)) {
-      await prisma.companyOnboardingSession.delete({ where: { phone: normalized } });
-      await wa.sendMessage({
-        to: normalized,
-        text: 'Alles klar – deine Daten wurden nicht gespeichert. Melde dich jederzeit wieder, wenn du Rapido ausprobieren möchtest. 👍',
-      });
-      return true;
-    }
-    if (!CONSENT_YES.has(lower)) {
-      await wa.sendMessage({ to: normalized, text: 'Bitte antworte mit *Ja* (zustimmen) oder *Nein* (ablehnen).' });
-      return true;
-    }
-    await prisma.companyOnboardingSession.update({
-      where: { phone: normalized },
-      data: { step: 'AWAIT_OWNER_NAME', tempData: { consentAt: new Date().toISOString() } },
-    });
-    await wa.sendMessage({
-      to: normalized,
-      text: `✅ Super, los geht's!\n\n*Wie heißt du?*\nBitte schreib deinen Vor- und Nachnamen. (z.B. "Max Mustermann")`,
-    });
-    return true;
-  }
-
   // ── AWAIT_OWNER_NAME ───────────────────────────────────────────────────────
   if (session.step === 'AWAIT_OWNER_NAME') {
-    const parts = input.trim().split(/\s+/);
+    const parts = input.split(/\s+/);
     if (parts.length < 2) {
-      // Nur Vorname → Nachname nachfragen
       await prisma.companyOnboardingSession.update({
         where: { phone: normalized },
         data: { step: 'AWAIT_OWNER_LASTNAME', tempData: { ...temp, ownerFirstName: parts[0] } },
       });
-      await wa.sendMessage({
-        to: normalized,
-        text: `Und dein *Nachname*, ${parts[0]}?`,
-      });
+      await wa.sendMessage({ to: normalized, text: `Und dein Nachname, ${parts[0]}?` });
       return true;
     }
     const firstName = parts[0];
     const lastName = parts.slice(1).join(' ');
     await prisma.companyOnboardingSession.update({
       where: { phone: normalized },
-      data: { step: 'AWAIT_NAME_CONFIRM', tempData: { ...temp, ownerFirstName: firstName, ownerLastName: lastName } },
+      data: { step: 'AWAIT_COMPANY_NAME', tempData: { ...temp, ownerFirstName: firstName, ownerLastName: lastName } },
     });
     await wa.sendMessage({
       to: normalized,
-      text: `Hallo, *${firstName} ${lastName}* 👋\n\nIst das korrekt? (Ja / Nein)`,
+      text: `Hallo, ${firstName} ${lastName}! 👋\n\nWie heißt dein Betrieb?`,
     });
     return true;
   }
 
   // ── AWAIT_OWNER_LASTNAME ───────────────────────────────────────────────────
   if (session.step === 'AWAIT_OWNER_LASTNAME') {
-    const lastName = input.trim();
+    const lastName = input;
     const firstName = temp.ownerFirstName ?? '';
     await prisma.companyOnboardingSession.update({
       where: { phone: normalized },
-      data: { step: 'AWAIT_NAME_CONFIRM', tempData: { ...temp, ownerLastName: lastName } },
+      data: { step: 'AWAIT_COMPANY_NAME', tempData: { ...temp, ownerLastName: lastName } },
     });
     await wa.sendMessage({
       to: normalized,
-      text: `Hallo, *${firstName} ${lastName}* 👋\n\nIst das korrekt? (Ja / Nein)`,
+      text: `Hallo, ${firstName} ${lastName}! 👋\n\nWie heißt dein Betrieb?`,
     });
     return true;
   }
 
-  // ── AWAIT_NAME_CONFIRM ─────────────────────────────────────────────────────
-  if (session.step === 'AWAIT_NAME_CONFIRM') {
-    if (CONFIRM_NO.has(lower)) {
-      await prisma.companyOnboardingSession.update({
-        where: { phone: normalized },
-        data: { step: 'AWAIT_OWNER_NAME', tempData: { consentAt: temp.consentAt } },
-      });
-      await wa.sendMessage({
-        to: normalized,
-        text: `Kein Problem! Wie heißt du? (Vor- und Nachname)`,
-      });
-      return true;
-    }
-    if (!CONFIRM_YES.has(lower)) {
-      await wa.sendMessage({ to: normalized, text: 'Bitte antworte mit *Ja* oder *Nein*.' });
+  // ── AWAIT_COMPANY_NAME ─────────────────────────────────────────────────────
+  if (session.step === 'AWAIT_COMPANY_NAME') {
+    if (input.length < 2) {
+      await wa.sendMessage({ to: normalized, text: 'Bitte gib einen gültigen Betriebsnamen ein.' });
       return true;
     }
     await prisma.companyOnboardingSession.update({
       where: { phone: normalized },
-      data: { step: 'AWAIT_COMPANY_INFO' },
+      data: { step: 'AWAIT_INDUSTRY', tempData: { ...temp, companyName: input } },
     });
     await wa.sendMessage({
       to: normalized,
       text:
-        `Perfekt! ✅\n\n*Wie heißt dein Betrieb?*\n\n` +
-        `Bitte nenn mir auch die Rechtsform:\n\n` +
-        `1️⃣ Einzelunternehmen\n` +
-        `2️⃣ GbR\n` +
-        `3️⃣ GmbH\n` +
-        `4️⃣ UG (haftungsbeschränkt)\n` +
-        `5️⃣ KG\n` +
-        `6️⃣ OHG\n` +
-        `7️⃣ Sonstiges\n\n` +
-        `_Beispiel: "Müller Bau" und dann die Zahl der Rechtsform_`,
-    });
-    return true;
-  }
-
-  // ── AWAIT_COMPANY_INFO (2 Nachrichten: erst Name, dann Rechtsform) ─────────
-  if (session.step === 'AWAIT_COMPANY_INFO') {
-    if (!temp.companyName) {
-      // Erste Nachricht: Betriebsname
-      const name = input.trim();
-      if (name.length < 2) {
-        await wa.sendMessage({ to: normalized, text: 'Bitte gib einen gültigen Betriebsnamen ein.' });
-        return true;
-      }
-      await prisma.companyOnboardingSession.update({
-        where: { phone: normalized },
-        data: { tempData: { ...temp, companyName: name } },
-      });
-      await wa.sendMessage({
-        to: normalized,
-        text:
-          `*${name}* – gut! 💪\n\nUnd die Rechtsform?\n\n` +
-          `1️⃣ Einzelunternehmen\n2️⃣ GbR\n3️⃣ GmbH\n4️⃣ UG\n5️⃣ KG\n6️⃣ OHG\n7️⃣ Sonstiges`,
-      });
-      return true;
-    }
-    // Zweite Nachricht: Rechtsform
-    const form = BUSINESS_FORMS[lower] ?? BUSINESS_FORMS[input.replace(/\s/g, '').toLowerCase()];
-    if (!form) {
-      await wa.sendMessage({
-        to: normalized,
-        text: 'Bitte wähle eine Zahl (1–7) oder schreib die Rechtsform (z.B. "GmbH").',
-      });
-      return true;
-    }
-    await prisma.companyOnboardingSession.update({
-      where: { phone: normalized },
-      data: { step: 'AWAIT_INDUSTRY', tempData: { ...temp, businessForm: form } },
-    });
-    await wa.sendMessage({
-      to: normalized,
-      text:
-        `*${temp.companyName}* als *${form}* – notiert! ✅\n\n` +
-        `*In welcher Branche bist du tätig?*\n\n` +
-        `1️⃣ Handwerk\n2️⃣ Einzelhandel\n3️⃣ Gastronomie / Sonstiges`,
+        `In welcher Branche bist du tätig?\n\n` +
+        `1️⃣ Handwerk\n2️⃣ Einzelhandel\n3️⃣ Gastronomie oder Sonstiges`,
     });
     return true;
   }
@@ -283,12 +148,11 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
       where: { phone: normalized },
       data: { step: nextStep, tempData: { ...temp, industry: industry.value, industryLabel: industry.label } },
     });
-
     if (industry.value === 'HANDWERK') {
       await wa.sendMessage({
         to: normalized,
         text:
-          `Handwerk – super! 🔧\n\n*Welches Gewerk?*\n\n` +
+          `Welches Gewerk?\n\n` +
           `1️⃣ Elektro\n2️⃣ Sanitär / Heizung / Klima\n3️⃣ Maler / Lackierer\n4️⃣ Maurer / Hochbau\n` +
           `5️⃣ Zimmerer / Holzbau\n6️⃣ Dachdecker\n7️⃣ Fliesenleger\n8️⃣ Schreiner / Tischler\n` +
           `9️⃣ Kfz / Mechatronik\n🔟 Garten- und Landschaftsbau\n1️⃣1️⃣ Sonstiges Handwerk`,
@@ -296,7 +160,7 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
     } else {
       await wa.sendMessage({
         to: normalized,
-        text: `*${industry.label}* – notiert! ✅\n\n*Wie viele Mitarbeiter* hat dein Betrieb ungefähr?\n_(z.B. "3", "5–10", "ca. 8")_`,
+        text: `Wie viele Mitarbeiter hat dein Betrieb?`,
       });
     }
     return true;
@@ -313,124 +177,119 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
       where: { phone: normalized },
       data: { step: 'AWAIT_EMPLOYEES', tempData: { ...temp, gewerk } },
     });
-    await wa.sendMessage({
-      to: normalized,
-      text: `*${gewerk}* – perfekt! 🔧\n\n*Wie viele Mitarbeiter* hat dein Betrieb ungefähr?\n_(z.B. "3", "5–10", "ca. 8")_`,
-    });
+    await wa.sendMessage({ to: normalized, text: `Wie viele Mitarbeiter hat dein Betrieb?` });
     return true;
   }
 
   // ── AWAIT_EMPLOYEES ────────────────────────────────────────────────────────
   if (session.step === 'AWAIT_EMPLOYEES') {
-    const count = input.trim();
-    if (!count) {
-      await wa.sendMessage({ to: normalized, text: 'Bitte gib die Anzahl deiner Mitarbeiter an (z.B. "5").' });
+    if (!input) {
+      await wa.sendMessage({ to: normalized, text: 'Bitte gib die Anzahl deiner Mitarbeiter an.' });
       return true;
     }
     await prisma.companyOnboardingSession.update({
       where: { phone: normalized },
-      data: { step: 'AWAIT_REMINDER', tempData: { ...temp, employeeCount: count } },
+      data: { step: 'AWAIT_REMINDER', tempData: { ...temp, employeeCount: input } },
     });
     await wa.sendMessage({
       to: normalized,
       text:
-        `*${count} Mitarbeiter* – notiert! ✅\n\n` +
-        `💡 *Empfehlung:* Sollen Mitarbeiter automatisch erinnert werden, wenn eine Zeitbuchung fehlt?\n\n` +
-        `Das sorgt für vollständige Aufzeichnungen ohne Nachfragen.\n\n` +
-        `Antworte mit *Ja* (empfohlen) oder *Nein*.`,
+        `Wir erinnern deine Mitarbeiter täglich um 18:00 Uhr, wenn eine Zeitbuchung fehlt.\n\n` +
+        `Wenn du eine andere Uhrzeit möchtest, nenn sie mir einfach. Oder schreib *Nein*, um die automatische Erinnerung zu deaktivieren.`,
     });
     return true;
   }
 
   // ── AWAIT_REMINDER ─────────────────────────────────────────────────────────
   if (session.step === 'AWAIT_REMINDER') {
-    if (CONFIRM_YES.has(lower)) {
-      await prisma.companyOnboardingSession.update({
-        where: { phone: normalized },
-        data: { step: 'AWAIT_REMINDER_TIME', tempData: { ...temp, autoReminder: true } },
-      });
-      await wa.sendMessage({
-        to: normalized,
-        text: `Gute Wahl! ⏰\n\n*Wann soll die Erinnerung rausgehen?*\n_(z.B. "17:00" oder "18:30")_`,
-      });
-    } else if (CONSENT_NO.has(lower)) {
-      await prisma.companyOnboardingSession.update({
-        where: { phone: normalized },
-        data: { step: 'AWAIT_STUNDENZETTEL', tempData: { ...temp, autoReminder: false } },
-      });
-      await wa.sendMessage({
-        to: normalized,
-        text:
-          `Alles klar.\n\n` +
-          `ℹ️ Du wirst benachrichtigt, wenn Mitarbeiter das Onboarding nicht abschließen.\n\n` +
-          `📋 *Stundenzettel:* Braucht ihr schriftliche Nachweise für eure Kunden?\n` +
-          `Willst du Stundenzettel als Foto speichern und jederzeit abrufen können?\n\n` +
-          `Antworte mit *Ja* oder *Nein*.`,
-      });
-    } else {
-      await wa.sendMessage({ to: normalized, text: 'Bitte antworte mit *Ja* oder *Nein*.' });
-    }
-    return true;
-  }
+    let autoReminder = true;
+    let reminderTime: string | undefined = '18:00';
 
-  // ── AWAIT_REMINDER_TIME ────────────────────────────────────────────────────
-  if (session.step === 'AWAIT_REMINDER_TIME') {
-    const timeMatch = input.match(/\d{1,2}[:.]\d{2}/);
-    const reminderTime = timeMatch ? timeMatch[0].replace('.', ':') : input.trim();
+    if (NO.has(lower)) {
+      autoReminder = false;
+      reminderTime = undefined;
+    } else {
+      const timeMatch = input.match(/(\d{1,2}[:.]\d{2})/);
+      if (timeMatch) reminderTime = timeMatch[0].replace('.', ':');
+    }
+
+    const info = autoReminder
+      ? `Erinnerungen gehen täglich um ${reminderTime} Uhr raus.`
+      : `Automatische Erinnerungen sind deaktiviert.`;
+
     await prisma.companyOnboardingSession.update({
       where: { phone: normalized },
-      data: { step: 'AWAIT_STUNDENZETTEL', tempData: { ...temp, reminderTime } },
+      data: { step: 'AWAIT_STUNDENZETTEL', tempData: { ...temp, autoReminder, reminderTime } },
     });
     await wa.sendMessage({
       to: normalized,
       text:
-        `⏰ Erinnerungen um *${reminderTime} Uhr* – eingestellt!\n\n` +
-        `ℹ️ Du wirst außerdem benachrichtigt, wenn Mitarbeiter das Onboarding nicht abschließen.\n\n` +
-        `📋 *Stundenzettel:* Braucht ihr schriftliche Nachweise für eure Kunden?\n` +
-        `Willst du Stundenzettel als Foto speichern und jederzeit abrufen können?\n\n` +
-        `Antworte mit *Ja* oder *Nein*.`,
+        `${info}\n\n` +
+        `Unterschreiben eure Kunden Stundenzettel als Nachweis? Dann kann dein Mitarbeiter das Dokument direkt per WhatsApp als Foto einschicken – Rapido speichert es automatisch und du kannst es jederzeit abrufen.\n\n` +
+        `Ja oder Nein?`,
     });
     return true;
   }
 
   // ── AWAIT_STUNDENZETTEL ────────────────────────────────────────────────────
   if (session.step === 'AWAIT_STUNDENZETTEL') {
-    if (CONFIRM_YES.has(lower)) {
-      await prisma.companyOnboardingSession.update({
-        where: { phone: normalized },
-        data: { step: 'AWAIT_BAUSTELLE', tempData: { ...temp, stundenzettel: true } },
-      });
-    } else if (CONSENT_NO.has(lower)) {
-      await prisma.companyOnboardingSession.update({
-        where: { phone: normalized },
-        data: { step: 'AWAIT_BAUSTELLE', tempData: { ...temp, stundenzettel: false } },
-      });
-    } else {
+    if (!YES.has(lower) && !NO.has(lower)) {
       await wa.sendMessage({ to: normalized, text: 'Bitte antworte mit *Ja* oder *Nein*.' });
       return true;
     }
+    await prisma.companyOnboardingSession.update({
+      where: { phone: normalized },
+      data: { step: 'AWAIT_BAUSTELLE', tempData: { ...temp, stundenzettel: YES.has(lower) } },
+    });
     await wa.sendMessage({
       to: normalized,
       text:
-        `🏗 *Baustellenmanagement:*\n\n` +
-        `Willst du, dass deine Mitarbeiter bei jeder Buchung auch die Baustelle nennen?\n\n` +
-        `Das gibt dir einen Überblick, wer wo arbeitet – und erleichtert die Abrechnung je Projekt.\n\n` +
-        `Antworte mit *Ja* oder *Nein*.`,
+        `Möchtest du auch das Baustellenmanagement aktivieren?\n\n` +
+        `Deine Mitarbeiter nennen bei jeder Buchung die Baustelle – du siehst jederzeit, wer wo arbeitet. ` +
+        `Das ist außerdem die Grundlage für weitere Funktionen wie Baustellenberichte und Auswertungen je Projekt.\n\n` +
+        `Ja oder Nein?`,
     });
     return true;
   }
 
-  // ── AWAIT_BAUSTELLE → Betrieb anlegen ──────────────────────────────────────
+  // ── AWAIT_BAUSTELLE → DSGVO einholen ──────────────────────────────────────
   if (session.step === 'AWAIT_BAUSTELLE') {
-    let baustelle = false;
-    if (CONFIRM_YES.has(lower)) {
-      baustelle = true;
-    } else if (!CONSENT_NO.has(lower)) {
+    if (!YES.has(lower) && !NO.has(lower)) {
       await wa.sendMessage({ to: normalized, text: 'Bitte antworte mit *Ja* oder *Nein*.' });
       return true;
     }
+    await prisma.companyOnboardingSession.update({
+      where: { phone: normalized },
+      data: { step: 'AWAIT_CONSENT', tempData: { ...temp, baustelle: YES.has(lower) } },
+    });
+    await wa.sendMessage({
+      to: normalized,
+      text:
+        `Fast fertig!\n\n` +
+        `Bevor ich alles speichere, kurz zum Datenschutz:\n\n` +
+        `Rapido speichert deinen Namen, deine Mobilnummer sowie die Zeiterfassungsdaten deiner Mitarbeiter – ausschließlich zur Erbringung des Dienstes (DSGVO Art. 6 Abs. 1b). Du kannst deine Einwilligung jederzeit widerrufen.\n\n` +
+        `📄 rapido-handwerk.net/datenschutz\n\n` +
+        `Schreib *Ja* zum Speichern oder *Nein* zum Abbrechen.`,
+    });
+    return true;
+  }
 
-    const finalTemp: TempData = { ...temp, baustelle };
+  // ── AWAIT_CONSENT → Betrieb anlegen ───────────────────────────────────────
+  if (session.step === 'AWAIT_CONSENT') {
+    if (NO.has(lower)) {
+      await prisma.companyOnboardingSession.delete({ where: { phone: normalized } });
+      await wa.sendMessage({
+        to: normalized,
+        text: `Kein Problem. Ohne Einwilligung werden keine Daten gespeichert. Du kannst jederzeit neu starten. 👋`,
+      });
+      return true;
+    }
+    if (!YES.has(lower)) {
+      await wa.sendMessage({ to: normalized, text: 'Bitte antworte mit *Ja* (speichern) oder *Nein* (abbrechen).' });
+      return true;
+    }
+
+    const finalTemp: TempData = temp;
     const ownerName = `${finalTemp.ownerFirstName ?? ''} ${finalTemp.ownerLastName ?? ''}`.trim();
 
     const company = await prisma.company.create({
@@ -451,7 +310,7 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
             employmentType: 'VOLLZEIT',
             onboardingState: 'ACTIVE',
             gdprConsent: true,
-            gdprConsentAt: new Date(finalTemp.consentAt ?? Date.now()),
+            gdprConsentAt: new Date(),
           },
         },
       },
@@ -464,29 +323,30 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
     });
 
     const extras: string[] = [];
-    if (finalTemp.gewerk) extras.push(`🔧 Gewerk: ${finalTemp.gewerk}`);
-    if (finalTemp.autoReminder) extras.push(`⏰ Erinnerungen: ${finalTemp.reminderTime ?? '—'} Uhr`);
-    if (finalTemp.stundenzettel) extras.push(`📋 Stundenzettel-Fotos: aktiviert`);
-    if (baustelle) extras.push(`🏗 Baustellenmanagement: aktiviert`);
+    if (finalTemp.gewerk) extras.push(`🔧 ${finalTemp.gewerk}`);
+    if (finalTemp.autoReminder) extras.push(`⏰ Erinnerung täglich um ${finalTemp.reminderTime} Uhr`);
+    if (finalTemp.stundenzettel) extras.push(`📋 Stundenzettel: aktiv`);
+    if (finalTemp.baustelle) extras.push(`🏗 Baustellenmanagement: aktiv`);
 
     await wa.sendMessage({
       to: normalized,
       text:
-        `🎉 *${company.name}* ist jetzt bei Rapido registriert!\n\n` +
-        `👤 Inhaber: ${ownerName}\n` +
-        `🏢 Rechtsform: ${finalTemp.businessForm ?? '—'}\n` +
-        `📊 Branche: ${finalTemp.industryLabel ?? '—'}\n` +
-        `👥 Mitarbeiter: ca. ${finalTemp.employeeCount ?? '—'}\n` +
+        `🎉 *${company.name} ist jetzt bei Rapido eingerichtet!*\n\n` +
+        `👥 ${finalTemp.employeeCount} Mitarbeiter\n` +
         (extras.length ? extras.join('\n') + '\n' : '') +
-        `\n*So geht's weiter:*\n` +
-        `👤 Mitarbeiter einladen: _"Mitarbeiter: Name, +4915..."_\n` +
-        `⏱ Eigene Zeit buchen: _"Start 08:00"_\n\n` +
-        `_Einwilligung jederzeit widerrufen: "Datenschutz löschen"_`,
+        `\n*Mitarbeiter einladen:*\n` +
+        `Leite diese Nachricht weiter:\n\n` +
+        `——————————————\n` +
+        `Dein Chef hat sich für *Rapido* entschieden. Damit können endlich die rechtlichen Vorschriften eingehalten werden und dein Chef hat weniger Arbeit mit den lästigen Stundenzetteln.\n\n` +
+        `Schreib eine Nachricht an die folgende Nummer – unter der du auch in Zukunft deine Zeitbuchungen vornimmst:\n\n` +
+        `📱 *+49 XXX XXXXXXX*\n\n` +
+        `– ${ownerName}, ${company.name}\n` +
+        `——————————————\n\n` +
+        `_Einwilligung widerrufen: "Datenschutz löschen"_`,
     });
     return true;
   }
 
-  // Session DONE aber kein Employee → reset
   if (session.step === 'DONE') {
     await prisma.companyOnboardingSession.delete({ where: { phone: normalized } });
   }
