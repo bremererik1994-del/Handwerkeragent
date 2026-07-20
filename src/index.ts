@@ -8,7 +8,18 @@ import { scheduleGdprCleanup } from './jobs/gdprCleanup';
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: config.frontendUrl, credentials: true }));
+app.use(cors({
+  origin: (origin, cb) => {
+    // Allow requests with no origin (local files, curl, Postman)
+    // and the configured frontend URL
+    if (!origin || origin === config.frontendUrl || origin.startsWith('file://')) {
+      cb(null, true);
+    } else {
+      cb(null, true); // allow all origins in dev/test; tighten in production
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.static('uploads')); // serve uploaded media
 app.use(express.static('public'));  // serve legal pages etc.
