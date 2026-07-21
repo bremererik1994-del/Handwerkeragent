@@ -18,6 +18,8 @@ export type ParsedIntent =
   | 'FOTO'
   | 'ONBOARDING_OPT_IN'
   | 'ONBOARDING_OPT_OUT'
+  | 'RETROACTIVE'   // booking for a past day
+  | 'QUERY_HOURS'   // "wie viele Stunden hab ich diese Woche?"
   | 'UNKNOWN';
 
 export interface ParsedMessage {

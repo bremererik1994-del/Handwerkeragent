@@ -4,7 +4,7 @@ import prisma from '../../db';
 import { getWhatsAppProvider } from './index';
 import { parseWhatsAppMessage } from '../nlp/message.parser';
 import { handleTimeTrackingIntent } from '../timetracking/service';
-import { handleOnboardingIntent } from '../onboarding/service';
+import { handleOnboardingIntent, handleInvitedEmployee, handleOptedInEmployee } from '../onboarding/service';
 import { handleLocationReportIntent } from '../location/service';
 import { handleKrank, handleUrlaub, handleZeitausgleich, handleSonderurlaub } from '../absence/service';
 import { handleCompanyOnboarding } from '../company-onboarding/service';
@@ -124,18 +124,20 @@ async function processInboundMessage(msg: WaMessage, phoneNumberId: string) {
     return;
   }
 
-  // Route by intent
-  if (parsed.intent === 'ONBOARDING_OPT_IN' || parsed.intent === 'ONBOARDING_OPT_OUT') {
-    await handleOnboardingIntent(employee, parsed, waMsg.id);
+  // Route by onboarding state
+  if (employee.onboardingState === 'INVITED') {
+    await handleInvitedEmployee(employee as any, text, parsed, waMsg.id, fromPhone);
     return;
   }
 
-  // Block non-opted-in employees from time tracking (DSGVO: ohne Einwilligung keine Verarbeitung)
-  if (employee.onboardingState === 'INVITED' || !employee.gdprConsent) {
-    await wa.sendMessage({
-      to: fromPhone,
-      text: 'Bitte bestätige zuerst deine Einladung mit "Ja", um ZeitPilot zu nutzen.',
-    });
+  if (employee.onboardingState === 'OPTED_IN') {
+    await handleOptedInEmployee(employee as any, text, parsed, waMsg.id, fromPhone);
+    return;
+  }
+
+  // Legacy opt-out handling for ACTIVE employees
+  if (parsed.intent === 'ONBOARDING_OPT_OUT') {
+    await handleOnboardingIntent(employee, parsed, waMsg.id);
     return;
   }
 

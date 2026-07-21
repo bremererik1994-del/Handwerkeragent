@@ -10,7 +10,10 @@ export async function handleTimeTrackingIntent(
   parsed: ParsedMessage,
   sourceMessageId: string,
   phone: string,
+  opts?: { beginnerMode?: boolean },
 ) {
+  const beginnerMode = opts?.beginnerMode ?? false;
+  void beginnerMode; // reserved for graduated responses in future
   const wa = getWhatsAppProvider();
 
   if (parsed.intent === 'START') {

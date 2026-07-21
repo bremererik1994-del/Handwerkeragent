@@ -149,6 +149,7 @@ model Employee {
   messages             WhatsAppMessage[]
   locationMedia        LocationMedia[]
   locationReports      LocationReport[]
+  onboardingSession    EmployeeOnboardingSession?
 
   @@map("employees")
 }
@@ -288,6 +289,26 @@ model WhatsAppMessage {
   createdAt DateTime @default(now())
 
   @@map("whatsapp_messages")
+}
+
+// ─── Employee Onboarding Session ─────────────────────────────────────────────
+
+model EmployeeOnboardingSession {
+  id             String    @id @default(cuid())
+  employeeId     String    @unique
+  employee       Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // AWAIT_INVITE_CONFIRM | AWAIT_NAME_CONFIRM | AWAIT_NAME_INPUT | AWAIT_FIRST_BOOKING | DONE
+  step           String    @default("AWAIT_INVITE_CONFIRM")
+  unknownStreak  Int       @default(0)   // UNKNOWN messages in a row → escalate at 3
+  reminderCount  Int       @default(0)   // how many 24h reminders sent
+  processedIds   String[]  @default([])  // last 20 message IDs for idempotency
+  lastReminderAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("employee_onboarding_sessions")
 }
 
 // ─── Company Onboarding Session ──────────────────────────────────────────────
