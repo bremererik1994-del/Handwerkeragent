@@ -60,7 +60,8 @@ async function processInboundMessage(msg: WaMessage, phoneNumberId: string) {
   });
 
   if (!employee) {
-    const handled = await handleCompanyOnboarding(fromPhone, text);
+    const msgType = msg.audio ? 'audio' : msg.image ? 'image' : msg.video ? 'video' : msg.document ? 'document' : 'text';
+    const handled = await handleCompanyOnboarding(fromPhone, text, { messageId: msg.id, messageType: msgType });
     if (handled) return;
     console.log('[Webhook] unknown phone, no onboarding session:', maskPhone(fromPhone));
     return;
@@ -195,6 +196,7 @@ interface WaMessage {
   type: string;
   text?: { body: string };
   button?: { text: string; payload: string };
+  audio?: { id: string; mime_type: string };
   image?: { id: string; mime_type: string };
   video?: { id: string; mime_type: string };
   document?: { id: string; mime_type: string };
