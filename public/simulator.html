@@ -479,29 +479,34 @@ function markStep(n) {
 function getChefReply(text, step) {
   const t = text.trim();
   switch (step) {
-    case 1: {
+    case 1:
+      return [
+        `👋 Willkommen bei *Rapido*!\n\nIch bin dein digitaler Assistent für Zeiterfassung per WhatsApp – kein App-Download, kein Papierkram. Deine Mitarbeiter schicken einfach eine Nachricht, wenn sie anfangen oder aufhören. Das war's.`,
+        `Ich richte deinen Betrieb jetzt ein.\n\nWie heißt du? Bitte schreib Vor- und Nachname.`
+      ];
+    case 2: {
       const parts = t.split(/\s+/);
       if (parts.length < 2) { chefData.vorname = parts[0]; chefStep--; return `Und dein Nachname, ${parts[0]}?`; }
       chefData.vorname = parts[0]; chefData.nachname = parts.slice(1).join(' ');
       return `Hallo, ${t}! 👋\n\nWie heißt dein Betrieb?`;
     }
-    case 2:
+    case 3:
       chefData.betrieb = t;
       return `In welcher Branche bist du tätig?\n\n1️⃣ Handwerk\n2️⃣ Einzelhandel\n3️⃣ Gastronomie oder Sonstiges`;
-    case 3: {
+    case 4: {
       const isHW = /^(1|handwerk)/i.test(t);
       chefData.branche = isHW ? 'Handwerk' : (t === '2' ? 'Einzelhandel' : 'Gastronomie/Sonstiges');
       if (isHW) return `Welches Gewerk?\n\n1️⃣ Elektro\n2️⃣ Sanitär / Heizung / Klima\n3️⃣ Maler / Lackierer\n4️⃣ Maurer / Hochbau\n5️⃣ Zimmerer / Holzbau\n6️⃣ Dachdecker\n7️⃣ Fliesenleger\n8️⃣ Schreiner / Tischler\n9️⃣ Kfz / Mechatronik\n🔟 Garten- und Landschaftsbau\n1️⃣1️⃣ Sonstiges Handwerk`;
       chefStep++;
       return `Wie viele Mitarbeiter hat dein Betrieb?`;
     }
-    case 4: {
+    case 5: {
       const gm = {'1':'Elektro','2':'Sanitär/Heizung/Klima','3':'Maler/Lackierer','4':'Maurer/Hochbau','5':'Zimmerer/Holzbau','6':'Dachdecker','7':'Fliesenleger','8':'Schreiner/Tischler','9':'Kfz/Mechatronik','10':'Garten- und Landschaftsbau','11':'Sonstiges Handwerk'};
       if (chefData.branche === 'Handwerk' && gm[t]) { chefData.gewerk = gm[t]; return `Wie viele Mitarbeiter hat dein Betrieb?`; }
       chefData.mitarbeiter = t;
       return `Wir erinnern deine Mitarbeiter täglich um 18:00 Uhr, wenn eine Zeitbuchung fehlt.\n\nWenn du eine andere Uhrzeit möchtest, nenn sie mir einfach. Oder schreib *Nein*, um die automatische Erinnerung zu deaktivieren.`;
     }
-    case 5: {
+    case 6: {
       if (chefData.branche === 'Handwerk' && !chefData.mitarbeiter) {
         chefData.mitarbeiter = t;
         return `Wir erinnern deine Mitarbeiter täglich um 18:00 Uhr, wenn eine Zeitbuchung fehlt.\n\nWenn du eine andere Uhrzeit möchtest, nenn sie mir einfach. Oder schreib *Nein*, um die automatische Erinnerung zu deaktivieren.`;
@@ -511,7 +516,7 @@ function getChefReply(text, step) {
       const info = chefData.reminder ? `Erinnerungen gehen täglich um ${chefData.reminder} Uhr raus.` : `Automatische Erinnerungen sind deaktiviert.`;
       return `${info}\n\nUnterschreiben eure Kunden Stundenzettel als Nachweis? Dann kann dein Mitarbeiter das Dokument direkt per WhatsApp als Foto einschicken – Rapido speichert es automatisch und du kannst es jederzeit abrufen.\n\nJa oder Nein?`;
     }
-    case 6: {
+    case 7: {
       if (chefData.branche === 'Handwerk' && chefData.reminder === undefined) {
         const tm = t.match(/(\d{1,2}[:.]\d{2})/);
         chefData.reminder = /^(nein|n)/i.test(t) ? null : (tm ? tm[0].replace('.', ':') : '18:00');
@@ -521,7 +526,7 @@ function getChefReply(text, step) {
       chefData.stundenzettel = /^(ja|j|ok)/i.test(t);
       return `Möchtest du auch das Baustellenmanagement aktivieren?\n\nDeine Mitarbeiter nennen bei jeder Buchung die Baustelle – du siehst jederzeit, wer wo arbeitet. Das ist außerdem die Grundlage für weitere Funktionen wie Baustellenberichte und Auswertungen je Projekt.\n\nJa oder Nein?`;
     }
-    case 7: {
+    case 8: {
       if (chefData.branche === 'Handwerk' && chefData.stundenzettel === undefined) {
         chefData.stundenzettel = /^(ja|j|ok)/i.test(t);
         return `Möchtest du auch das Baustellenmanagement aktivieren?\n\nDeine Mitarbeiter nennen bei jeder Buchung die Baustelle – du siehst jederzeit, wer wo arbeitet. Das ist außerdem die Grundlage für weitere Funktionen wie Baustellenberichte und Auswertungen je Projekt.\n\nJa oder Nein?`;
@@ -529,7 +534,7 @@ function getChefReply(text, step) {
       chefData.baustelle = /^(ja|j|ok)/i.test(t);
       return `Fast fertig!\n\nBevor ich alles speichere, kurz zum Datenschutz:\n\nRapido speichert deinen Namen, deine Mobilnummer sowie die Zeiterfassungsdaten deiner Mitarbeiter – ausschließlich zur Erbringung des Dienstes (DSGVO Art. 6 Abs. 1b). Du kannst deine Einwilligung jederzeit widerrufen.\n\n📄 rapido-handwerk.net/datenschutz\n\nSchreib *Ja* zum Speichern oder *Nein* zum Abbrechen.`;
     }
-    case 8: {
+    case 9: {
       if (chefData.branche === 'Handwerk' && chefData.baustelle === undefined) {
         chefData.baustelle = /^(ja|j|ok)/i.test(t);
         return `Fast fertig!\n\nBevor ich alles speichere, kurz zum Datenschutz:\n\nRapido speichert deinen Namen, deine Mobilnummer sowie die Zeiterfassungsdaten deiner Mitarbeiter – ausschließlich zur Erbringung des Dienstes (DSGVO Art. 6 Abs. 1b). Du kannst deine Einwilligung jederzeit widerrufen.\n\n📄 rapido-handwerk.net/datenschutz\n\nSchreib *Ja* zum Speichern oder *Nein* zum Abbrechen.`;
@@ -537,8 +542,8 @@ function getChefReply(text, step) {
       if (/^(nein|n)/i.test(t)) { chefStep = 0; chefData = {}; return `Kein Problem. Ohne Einwilligung werden keine Daten gespeichert. Du kannst jederzeit neu starten. 👋`; }
       return finishChefOnboarding();
     }
-    case 9:
-    case 10: {
+    case 10:
+    case 11: {
       if (/^(nein|n)/i.test(t)) { chefStep = 0; chefData = {}; return `Kein Problem. Ohne Einwilligung werden keine Daten gespeichert. Du kannst jederzeit neu starten. 👋`; }
       return finishChefOnboarding();
     }
@@ -557,11 +562,18 @@ function finishChefOnboarding() {
     (chefData.stundenzettel ? `📋 Stundenzettel: aktiv\n` : '') +
     (chefData.baustelle ? `🏗 Baustellenmanagement: aktiv\n` : '');
   const forward =
-    `Leite diese Nachricht an deine Mitarbeiter weiter:\n\n——————————————\n` +
-    `Dein Chef hat sich für *Rapido* entschieden. Damit können endlich die rechtlichen Vorschriften eingehalten werden und dein Chef hat weniger Arbeit mit den lästigen Stundenzetteln.\n\n` +
-    `Schreib eine Nachricht an die folgende Nummer – unter der du auch in Zukunft deine Zeitbuchungen vornimmst:\n\n` +
+    `Leite das einfach an deine Mitarbeiter weiter:\n\n——————————————\n` +
+    `Dein Chef hat sich für *Rapido* entschieden – eine digitale Zeiterfassung per WhatsApp. Alle Arbeitsabläufe bleiben so wie bisher, ihr bucht eure Zeiten einfach per Nachricht statt auf Papier. Damit können endlich die rechtlichen Vorschriften eingehalten werden und dein Chef hat weniger Arbeit mit den lästigen Stundenzetteln.\n\n` +
+    `Schreib einmal *Ja* an diese Nummer, um dich anzumelden – unter der du auch in Zukunft deine Zeitbuchungen vornimmst:\n\n` +
     `📱 *+49 XXX XXXXXXX*\n\n– ${name}, ${chefData.betrieb}\n——————————————`;
-  return [summary, forward];
+  const msgs = [summary, forward];
+  if (chefData.stundenzettel) {
+    msgs.push(
+      `Und noch ein Hinweis für deine Mitarbeiter:\n\n——————————————\n` +
+      `Wenn ihr einen Stundenzettel vom Kunden unterschrieben bekommt, schickt das Dokument bitte als Foto per WhatsApp an diese Nummer – mit einem kurzen Kommentar zur Baustelle, damit es richtig zugeordnet wird.\n——————————————`
+    );
+  }
+  return msgs;
 }
 
 function guessIntent(text) {

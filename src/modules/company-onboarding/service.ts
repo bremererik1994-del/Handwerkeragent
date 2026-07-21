@@ -66,9 +66,12 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
     await wa.sendMessage({
       to: normalized,
       text:
-        `👋 Hallo! Ich bin *Rapido* – deine digitale Zeiterfassung per WhatsApp.\n\n` +
-        `Kein App-Download, kein Papierkram. Deine Mitarbeiter schicken einfach eine WhatsApp – das war's.\n\n` +
-        `Ich richte deinen Betrieb jetzt ein. Wie heißt du? Bitte schreib Vor- und Nachname.`,
+        `👋 Willkommen bei *Rapido*!\n\n` +
+        `Ich bin dein digitaler Assistent für Zeiterfassung per WhatsApp – kein App-Download, kein Papierkram. Deine Mitarbeiter schicken einfach eine Nachricht, wenn sie anfangen oder aufhören. Das war's.`,
+    });
+    await wa.sendMessage({
+      to: normalized,
+      text: `Ich richte deinen Betrieb jetzt ein.\n\nWie heißt du? Bitte schreib Vor- und Nachname.`,
     });
     return true;
   }
@@ -334,16 +337,31 @@ export async function handleCompanyOnboarding(phone: string, text: string): Prom
         `🎉 *${company.name} ist jetzt bei Rapido eingerichtet!*\n\n` +
         `👥 ${finalTemp.employeeCount} Mitarbeiter\n` +
         (extras.length ? extras.join('\n') + '\n' : '') +
-        `\n*Mitarbeiter einladen:*\n` +
-        `Leite diese Nachricht weiter:\n\n` +
+        `\n_Einwilligung widerrufen: "Datenschutz löschen"_`,
+    });
+
+    await wa.sendMessage({
+      to: normalized,
+      text:
+        `Leite das einfach an deine Mitarbeiter weiter:\n\n` +
         `——————————————\n` +
-        `Dein Chef hat sich für *Rapido* entschieden. Damit können endlich die rechtlichen Vorschriften eingehalten werden und dein Chef hat weniger Arbeit mit den lästigen Stundenzetteln.\n\n` +
-        `Schreib eine Nachricht an die folgende Nummer – unter der du auch in Zukunft deine Zeitbuchungen vornimmst:\n\n` +
+        `Dein Chef hat sich für *Rapido* entschieden – eine digitale Zeiterfassung per WhatsApp. Alle Arbeitsabläufe bleiben so wie bisher, ihr bucht eure Zeiten einfach per Nachricht statt auf Papier. Damit können endlich die rechtlichen Vorschriften eingehalten werden und dein Chef hat weniger Arbeit mit den lästigen Stundenzetteln.\n\n` +
+        `Schreib einmal *Ja* an diese Nummer, um dich anzumelden – unter der du auch in Zukunft deine Zeitbuchungen vornimmst:\n\n` +
         `📱 *+49 XXX XXXXXXX*\n\n` +
         `– ${ownerName}, ${company.name}\n` +
-        `——————————————\n\n` +
-        `_Einwilligung widerrufen: "Datenschutz löschen"_`,
+        `——————————————`,
     });
+
+    if (finalTemp.stundenzettel) {
+      await wa.sendMessage({
+        to: normalized,
+        text:
+          `Und noch ein Hinweis für deine Mitarbeiter:\n\n` +
+          `——————————————\n` +
+          `Wenn ihr einen Stundenzettel vom Kunden unterschrieben bekommt, schickt das Dokument bitte als Foto per WhatsApp an diese Nummer – mit einem kurzen Kommentar zur Baustelle, damit es richtig zugeordnet wird.\n` +
+          `——————————————`,
+      });
+    }
     return true;
   }
 
