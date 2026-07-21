@@ -299,26 +299,26 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
 
   await wa.sendMessage({
     to: phone,
+    text: `Leite das einfach an deine Mitarbeiter weiter:`,
+  });
+
+  const stundenzettelHinweis = temp.stundenzettel
+    ? `\n\nWenn ihr einen Stundenzettel vom Kunden unterschrieben bekommt, schickt das Dokument bitte als Foto per WhatsApp an diese Nummer – mit einem kurzen Kommentar zur Baustelle, damit es richtig zugeordnet wird.`
+    : '';
+
+  await wa.sendMessage({
+    to: phone,
     text:
-      `Leite das einfach an deine Mitarbeiter weiter:\n\n——————————————\n` +
+      `——————————————\n` +
       `Dein Chef hat sich für *Rapido* entschieden – eine digitale Zeiterfassung per WhatsApp. ` +
       `Alle Arbeitsabläufe bleiben so wie bisher, ihr bucht eure Zeiten einfach per Nachricht statt auf Papier. ` +
       `Damit können endlich die rechtlichen Vorschriften eingehalten werden und dein Chef hat weniger Arbeit mit den lästigen Stundenzetteln.\n\n` +
       `Schreib einmal *Ja* an diese Nummer, um dich anzumelden:\n\n` +
       `📱 *+49 XXX XXXXXXX*\n\n` +
-      `– ${ownerName}, ${company.name}\n——————————————`,
+      `– ${ownerName}, ${company.name}` +
+      stundenzettelHinweis +
+      `\n——————————————`,
   });
-
-  if (temp.stundenzettel) {
-    await wa.sendMessage({
-      to: phone,
-      text:
-        `Und noch ein Hinweis für deine Mitarbeiter:\n\n——————————————\n` +
-        `Wenn ihr einen Stundenzettel vom Kunden unterschrieben bekommt, schickt das Dokument bitte ` +
-        `als Foto per WhatsApp an diese Nummer – mit einem kurzen Kommentar zur Baustelle, damit es richtig zugeordnet wird.\n` +
-        `——————————————`,
-    });
-  }
 }
 
 // ─── Main Handler ─────────────────────────────────────────────────────────────
