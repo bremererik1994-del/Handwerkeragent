@@ -150,7 +150,7 @@ async function processInboundMessage(msg: WaMessage, phoneNumberId: string) {
     return;
   }
 
-  if (['START', 'END', 'BREAK', 'DAY_ENTRY'].includes(parsed.intent)) {
+  if (['START', 'END', 'BREAK', 'DAY_ENTRY', 'RETROACTIVE', 'CORRECTION', 'QUERY_HOURS'].includes(parsed.intent)) {
     await handleTimeTrackingIntent(employee, parsed, waMsg.id, fromPhone);
   } else if (['LAGER', 'UMSATZ', 'KASSENABSCHLUSS'].includes(parsed.intent)) {
     await handleLocationReportIntent(employee, parsed.intent, parsed as any, undefined, text);

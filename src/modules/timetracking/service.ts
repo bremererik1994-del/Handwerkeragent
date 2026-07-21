@@ -87,6 +87,15 @@ export async function handleTimeTrackingIntent(
   } else if (parsed.intent === 'DAY_ENTRY') {
     await handleDayEntry(employee, parsed, sourceMessageId, phone);
 
+  } else if (parsed.intent === 'RETROACTIVE') {
+    await handleRetroactive(employee, parsed, sourceMessageId, phone);
+
+  } else if (parsed.intent === 'CORRECTION') {
+    await handleCorrection(employee, parsed, sourceMessageId, phone);
+
+  } else if (parsed.intent === 'QUERY_HOURS') {
+    await handleQueryHours(employee, phone);
+
   } else if (parsed.intent === 'BREAK') {
     const running = await prisma.timeEntry.findFirst({
       where: { employeeId: employee.id, status: 'RUNNING' },
@@ -235,6 +244,244 @@ async function handleDayEntry(
       (breakMinutes ? `, Pause ${breakMinutes} Min` : '') +
       `\nArbeitszeit: ${hours}h ${mins}min. Danke!`,
   });
+}
+
+// ─── Retroactive booking ──────────────────────────────────────────────────────
+
+async function handleRetroactive(
+  employee: Employee,
+  parsed: ParsedMessage,
+  sourceMessageId: string,
+  phone: string,
+) {
+  const wa = getWhatsAppProvider();
+  const date = parsed.retroactiveDate!;
+
+  // Check for duplicate: already have a COMPLETED entry that day?
+  const dayStart = new Date(date + 'T00:00:00');
+  const dayEnd = new Date(date + 'T23:59:59');
+  const existing = await prisma.timeEntry.findFirst({
+    where: { employeeId: employee.id, startTime: { gte: dayStart, lte: dayEnd }, status: 'COMPLETED' },
+  });
+  if (existing) {
+    const label = formatDateLabel(date);
+    await wa.sendMessage({
+      to: phone,
+      text:
+        `ℹ️ Für *${label}* gibt es bereits einen Eintrag ` +
+        `(${format(existing.startTime, 'HH:mm')}–${existing.endTime ? format(existing.endTime, 'HH:mm') : '?'} Uhr).\n\n` +
+        `Falls das falsch ist, schreib: _Korrektur ${label} HH:MM–HH:MM_`,
+    });
+    return;
+  }
+
+  const locationId = await resolveLocation(employee.companyId, parsed.locationHint);
+  const breakMinutes = parsed.breakMinutes ?? 0;
+  let startTime: Date;
+  let endTime: Date;
+  let totalMinutes: number;
+
+  if (parsed.startTime && parsed.endTime) {
+    startTime = parseDateTimeString(date, parsed.startTime);
+    endTime = parseDateTimeString(date, parsed.endTime);
+    const gross = differenceInMinutes(endTime, startTime);
+    totalMinutes = Math.max(0, gross - breakMinutes);
+  } else if (parsed.totalHours) {
+    totalMinutes = Math.round(parsed.totalHours * 60);
+    startTime = parseDateTimeString(date, '08:00');
+    endTime = new Date(startTime.getTime() + (totalMinutes + breakMinutes) * 60_000);
+  } else {
+    await wa.sendMessage({
+      to: phone,
+      text: `❓ Welche Zeiten für *${formatDateLabel(date)}*? Beispiel: _${formatDateLabel(date)} 8:00–17:00_`,
+    });
+    return;
+  }
+
+  // Plausibility check
+  if (totalMinutes > 14 * 60) {
+    await wa.sendMessage({
+      to: phone,
+      text: `⚠️ Die Arbeitszeit für *${formatDateLabel(date)}* wäre über 14 Stunden – ist das korrekt? Bitte korrigiere die Zeiten.`,
+    });
+    return;
+  }
+
+  const entry = await prisma.timeEntry.create({
+    data: {
+      employeeId: employee.id,
+      companyId: employee.companyId,
+      locationId,
+      startTime,
+      endTime,
+      breakMinutes,
+      totalMinutes,
+      status: 'COMPLETED',
+      sourceMessageId,
+      rawText: parsed.rawText,
+    },
+  });
+  await createAuditLog(entry.id, employee.id, 'CREATE', null, entry);
+
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  await wa.sendMessage({
+    to: phone,
+    text:
+      `✅ Nachgetragen für *${formatDateLabel(date)}*: ` +
+      `${format(startTime, 'HH:mm')}–${format(endTime, 'HH:mm')} Uhr` +
+      (breakMinutes ? `, Pause ${breakMinutes} Min` : '') +
+      ` = ${h}h ${m}min.`,
+  });
+}
+
+// ─── Correction ───────────────────────────────────────────────────────────────
+
+async function handleCorrection(
+  employee: Employee,
+  parsed: ParsedMessage,
+  sourceMessageId: string,
+  phone: string,
+) {
+  const wa = getWhatsAppProvider();
+  const date = parsed.retroactiveDate ?? new Date().toISOString().slice(0, 10);
+  const dayStart = new Date(date + 'T00:00:00');
+  const dayEnd = new Date(date + 'T23:59:59');
+
+  // Find the entry to correct (most recent COMPLETED on that day, or RUNNING today)
+  const entry = await prisma.timeEntry.findFirst({
+    where: {
+      employeeId: employee.id,
+      startTime: { gte: dayStart, lte: dayEnd },
+      status: { in: ['COMPLETED', 'RUNNING'] },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (!entry) {
+    const label = formatDateLabel(date);
+    await wa.sendMessage({
+      to: phone,
+      text: `ℹ️ Ich habe keinen Eintrag für *${label}* gefunden, den ich korrigieren könnte.`,
+    });
+    return;
+  }
+
+  const oldSnapshot = { ...entry };
+  const breakMinutes = parsed.breakMinutes ?? entry.breakMinutes ?? 0;
+
+  let startTime = entry.startTime;
+  let endTime = entry.endTime ?? undefined;
+  let totalMinutes = entry.totalMinutes ?? 0;
+
+  if (parsed.startTime) startTime = parseDateTimeString(date, parsed.startTime);
+  if (parsed.endTime) endTime = parseDateTimeString(date, parsed.endTime);
+
+  if (parsed.totalHours) {
+    totalMinutes = Math.round(parsed.totalHours * 60);
+    if (!parsed.startTime) endTime = new Date(startTime.getTime() + (totalMinutes + breakMinutes) * 60_000);
+  } else if (endTime) {
+    const gross = differenceInMinutes(endTime, startTime);
+    totalMinutes = Math.max(0, gross - breakMinutes);
+  }
+
+  // Plausibility
+  if (totalMinutes > 14 * 60) {
+    await wa.sendMessage({
+      to: phone,
+      text: `⚠️ Die korrigierten Zeiten ergeben mehr als 14 Stunden – bitte prüfe nochmal.`,
+    });
+    return;
+  }
+
+  const updated = await prisma.timeEntry.update({
+    where: { id: entry.id },
+    data: {
+      startTime,
+      endTime,
+      breakMinutes,
+      totalMinutes,
+      status: 'CORRECTED',
+      rawText: parsed.rawText,
+    },
+  });
+  await createAuditLog(entry.id, employee.id, 'CORRECT', oldSnapshot, updated);
+
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  const label = formatDateLabel(date);
+
+  await wa.sendMessage({
+    to: phone,
+    text:
+      `✅ Korrigiert für *${label}*: ` +
+      `${format(startTime, 'HH:mm')}–${endTime ? format(endTime, 'HH:mm') : '?'} Uhr` +
+      (breakMinutes ? `, Pause ${breakMinutes} Min` : '') +
+      ` = ${h}h ${m}min.`,
+  });
+}
+
+// ─── Query hours ──────────────────────────────────────────────────────────────
+
+async function handleQueryHours(employee: Employee, phone: string) {
+  const wa = getWhatsAppProvider();
+  const today = new Date();
+
+  // This week (Mon–today)
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const entries = await prisma.timeEntry.findMany({
+    where: {
+      employeeId: employee.id,
+      status: { in: ['COMPLETED', 'CORRECTED'] },
+      startTime: { gte: startOfWeek },
+    },
+    orderBy: { startTime: 'asc' },
+  });
+
+  if (entries.length === 0) {
+    await wa.sendMessage({ to: phone, text: `📊 Diese Woche habe ich noch keine Buchungen von dir.` });
+    return;
+  }
+
+  const totalMin = entries.reduce((s, e) => s + (e.totalMinutes ?? 0), 0);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+
+  const lines = entries.map(e => {
+    const dayName = format(e.startTime, 'EEEE', { locale: undefined });
+    const eh = Math.floor((e.totalMinutes ?? 0) / 60);
+    const em = (e.totalMinutes ?? 0) % 60;
+    return `• ${format(e.startTime, 'dd.MM.')} ${format(e.startTime, 'HH:mm')}–${e.endTime ? format(e.endTime, 'HH:mm') : '?'}: ${eh}h ${em}min`;
+  });
+
+  await wa.sendMessage({
+    to: phone,
+    text:
+      `📊 *Diese Woche (${format(startOfWeek, 'dd.MM.')}–heute):*\n\n` +
+      lines.join('\n') +
+      `\n\n*Gesamt: ${h}h ${m}min*`,
+  });
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function parseDateTimeString(date: string, time: string): Date {
+  const [h, m] = time.split(':').map(Number);
+  const d = new Date(date + 'T00:00:00');
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+function formatDateLabel(isoDate: string): string {
+  const today = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (isoDate === today) return 'heute';
+  if (isoDate === yesterday) return 'gestern';
+  const d = new Date(isoDate);
+  return format(d, 'dd.MM.yyyy');
 }
 
 async function checkMinijobLimit(employee: Employee, phone: string) {

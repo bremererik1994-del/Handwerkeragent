@@ -18,7 +18,8 @@ export type ParsedIntent =
   | 'FOTO'
   | 'ONBOARDING_OPT_IN'
   | 'ONBOARDING_OPT_OUT'
-  | 'RETROACTIVE'   // booking for a past day
+  | 'RETROACTIVE'   // booking for a past day: "gestern 8-17"
+  | 'CORRECTION'    // correcting an existing entry: "Korrektur: heute 9-17"
   | 'QUERY_HOURS'   // "wie viele Stunden hab ich diese Woche?"
   | 'UNKNOWN';
 
@@ -27,10 +28,12 @@ export interface ParsedMessage {
   // START / END
   time?: string;         // HH:MM
   locationHint?: string;
-  // DAY_ENTRY: single booking
+  // DAY_ENTRY / RETROACTIVE / CORRECTION: single booking
   startTime?: string;    // HH:MM
   endTime?: string;      // HH:MM
   totalHours?: number;   // alternative: "8.5h" without explicit times
+  // RETROACTIVE + CORRECTION: which date to book/correct
+  retroactiveDate?: string;  // ISO "YYYY-MM-DD"
   // BREAK
   breakMinutes?: number;
   // LAGER
@@ -55,18 +58,23 @@ Analysiere WhatsApp-Nachrichten von Mitarbeitern und extrahiere strukturierte Da
 Mögliche Intents:
 - START: Schichtbeginn (z.B. "Start 7:30", "Bin da", "Fange an")
 - END: Schichtende (z.B. "Ende", "Fertig", "Gehe jetzt")
-- DAY_ENTRY: Tagesbuchung in einer Nachricht am Abend.
-    Formen: "9:00-17:30", "9-17 Pause 30", "heute 8h", "8,5 Stunden", "9:00 bis 17:30 Pause 45 Min"
+- DAY_ENTRY: Tagesbuchung in einer Nachricht (heutiger Tag).
+    Formen: "9:00-17:30", "9-17 Pause 30", "heute 8h", "8,5 Stunden"
     Felder: startTime (HH:MM oder null), endTime (HH:MM oder null), totalHours (Zahl oder null), breakMinutes (Zahl oder null)
+- RETROACTIVE: Buchung für einen VERGANGENEN Tag. Schlüsselwörter: "gestern", "vorgestern", "letzten Montag", "am Freitag", "DD.MM."
+    Felder: retroactiveDate (YYYY-MM-DD, berechne aus aktuellem Datum ${new Date().toISOString().slice(0,10)}), startTime, endTime, totalHours, breakMinutes
+- CORRECTION: Korrektur einer bereits gebuchten Zeit. Schlüsselwörter: "Korrektur", "Fehler", "ich meinte", "falsch", "stimmt nicht", "war nicht"
+    Felder: retroactiveDate (YYYY-MM-DD, today wenn nicht angegeben), startTime, endTime, totalHours, breakMinutes
+- QUERY_HOURS: Stunden-Abfrage (z.B. "Wie viele Stunden diese Woche?", "Was hab ich heute?")
 - BREAK: Nur Pausen-Nachtrag (z.B. "Pause 30 Min", "30 Minuten Pause")
 - LAGER: Lagerbestandsmeldung (z.B. "Artikel X fast leer")
 - UMSATZ: Tagesumsatzmeldung (z.B. "Umsatz heute 1.250 €")
 - KASSENABSCHLUSS: Kassenabschlussmeldung
 - FOTO: Nur wenn Nachricht explizit auf gesendetes Foto verweist
-- KRANK: Krankmeldung (z.B. "Ich bin krank", "Kann nicht kommen", "Arzttermin"). Felder: durationDays (Int), until (String optional)
-- URLAUB: Urlaubsantrag. Felder: durationDays (Int), from (String optional "DD.MM." oder Wochentag)
-- ZEITAUSGLEICH: Freizeitausgleich / Abbau von Überstunden. Felder: durationDays (Int), from (String optional)
-- SONDERURLAUB: Sonderurlaub, Pflegezeit, Elternzeit, Mutterschutz. Felder: durationDays (Int optional)
+- KRANK: Krankmeldung. Felder: durationDays (Int), until (String optional)
+- URLAUB: Urlaubsantrag. Felder: durationDays (Int), from (String optional)
+- ZEITAUSGLEICH: Freizeitausgleich. Felder: durationDays (Int), from (String optional)
+- SONDERURLAUB: Sonderurlaub, Pflegezeit, Elternzeit. Felder: durationDays (Int optional)
 - ONBOARDING_OPT_IN: Zustimmung (Ja, OK, Einverstanden)
 - ONBOARDING_OPT_OUT: Ablehnung (Nein, Stop, Abmelden)
 - UNKNOWN: Unklar
@@ -232,6 +240,108 @@ function fastParse(text: string): ParsedMessage | null {
     };
   }
 
+  // ── QUERY_HOURS ────────────────────────────────────────────────────────────
+  if (/wie\s+viele?\s+stunden|meine\s+stunden|was\s+hab\s+ich\s+(heute|diese\s+woche)|stundenstand/i.test(t)) {
+    return { intent: 'QUERY_HOURS', confidence: 'HIGH', rawText: text };
+  }
+
+  // ── CORRECTION ─────────────────────────────────────────────────────────────
+  const correctionTrigger = /^(korrektur|fehler[,:]|ich\s+meinte|falsch[,:]|stimmt\s+nicht|war\s+nicht|nein[,\s]+ich\s+meinte)/i.test(t);
+  if (correctionTrigger) {
+    const dateRef = parseDateRef(t);
+    const timeRange = extractTimeRange(t);
+    const hoursMatch = t.match(/(\d+(?:[.,]\d+)?)\s*(?:h|std|stunden?)\b/);
+    return {
+      intent: 'CORRECTION',
+      retroactiveDate: dateRef ?? isoToday(),
+      startTime: timeRange?.startTime,
+      endTime: timeRange?.endTime,
+      totalHours: hoursMatch ? parseFloat(hoursMatch[1].replace(',', '.')) : undefined,
+      breakMinutes: extractBreak(t),
+      confidence: 'HIGH',
+      rawText: text,
+    };
+  }
+
+  // ── RETROACTIVE ────────────────────────────────────────────────────────────
+  const retroTrigger = /gestern|vorgestern|letzten?\s+(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)|am\s+(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)|\b\d{1,2}\.\d{1,2}\./i.test(t);
+  if (retroTrigger) {
+    const dateRef = parseDateRef(t);
+    if (dateRef && dateRef !== isoToday()) {
+      const timeRange = extractTimeRange(t);
+      const hoursMatch = t.match(/(\d+(?:[.,]\d+)?)\s*(?:h|std|stunden?)\b/);
+      return {
+        intent: 'RETROACTIVE',
+        retroactiveDate: dateRef,
+        startTime: timeRange?.startTime,
+        endTime: timeRange?.endTime,
+        totalHours: hoursMatch ? parseFloat(hoursMatch[1].replace(',', '.')) : undefined,
+        breakMinutes: extractBreak(t),
+        confidence: timeRange || hoursMatch ? 'HIGH' : 'LOW',
+        clarificationQuestion: !timeRange && !hoursMatch ? 'Welche Zeiten soll ich für diesen Tag nachtragen?' : undefined,
+        rawText: text,
+      };
+    }
+  }
+
+  return null;
+}
+
+// ── Date resolution helpers ─────────────────────────────────────────────────
+
+function isoToday(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function parseDateRef(text: string): string | null {
+  const t = text.toLowerCase();
+  const today = new Date();
+
+  if (/\bgestern\b/.test(t)) return offsetDate(today, -1);
+  if (/\bvorgestern\b/.test(t)) return offsetDate(today, -2);
+
+  // "DD.MM." or "DD.MM.YYYY"
+  const dmMatch = t.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})?/);
+  if (dmMatch) {
+    const year = dmMatch[3] ? parseInt(dmMatch[3]) : today.getFullYear();
+    const d = new Date(year, parseInt(dmMatch[2]) - 1, parseInt(dmMatch[1]));
+    if (!isNaN(d.getTime()) && d < today) return d.toISOString().slice(0, 10);
+  }
+
+  // Weekday references: "letzten Montag" / "am Freitag"
+  const DAYS: Record<string, number> = {
+    sonntag: 0, montag: 1, dienstag: 2, mittwoch: 3,
+    donnerstag: 4, freitag: 5, samstag: 6,
+  };
+  const dayMatch = t.match(/(?:letzten?\s+|am\s+)(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)/i);
+  if (dayMatch) {
+    const targetDay = DAYS[dayMatch[1].toLowerCase()];
+    const current = today.getDay();
+    let diff = current - targetDay;
+    if (diff <= 0) diff += 7; // always go back
+    return offsetDate(today, -diff);
+  }
+
+  return null;
+}
+
+function offsetDate(base: Date, days: number): string {
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function extractTimeRange(text: string): { startTime: string; endTime: string } | null {
+  const t = text.toLowerCase();
+  // "9:00-17:30" / "9:00 bis 17:30" / "9-17"
+  const full = t.match(/(\d{1,2}[:.]\d{2})\s*(?:-|bis)\s*(\d{1,2}[:.]\d{2})/);
+  if (full) return { startTime: normalizeTime(full[1]), endTime: normalizeTime(full[2]) };
+  const short = t.match(/(\d{1,2})\s*(?:-|bis)\s*(\d{1,2})\b/);
+  if (short) {
+    const s = parseInt(short[1]), e = parseInt(short[2]);
+    if (s >= 4 && s <= 23 && e >= 4 && e <= 23)
+      return { startTime: `${String(s).padStart(2,'0')}:00`, endTime: `${String(e).padStart(2,'0')}:00` };
+  }
   return null;
 }
 

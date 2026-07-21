@@ -426,6 +426,30 @@ export async function handleCompanyOnboarding(
 
   // ── AWAIT_CONSENT: DSGVO-Abschluss ───────────────────────────────────────────
   if (session.step === 'AWAIT_CONSENT') {
+    // Korrektur mitten in der DSGVO-Abfrage → zurück zu COLLECTING
+    const CORRECTION_TRIGGER = /korrigier|falsch|stimmt nicht|ich mein|nein.*mitarbeiter|nein.*name|nein.*betrieb|ändere?n|doch.*nicht/i.test(lower);
+    if (CORRECTION_TRIGGER) {
+      const extraction = await extractOnboardingData(input, { currentStep: 'COLLECTING', collectedFields: getCollectedFields(temp), messageType });
+      if (extraction.intent === 'CORRECTION' || extraction.intent === 'PROVIDE_INFO') {
+        const before = { ...temp };
+        const { updated } = applyExtraction(temp, extraction);
+        temp = updated;
+        const correctedFields: string[] = [];
+        if (before.ownerFirstName !== temp.ownerFirstName || before.ownerLastName !== temp.ownerLastName)
+          correctedFields.push(`Name: *${temp.ownerFirstName} ${temp.ownerLastName}*`);
+        if (before.companyName !== temp.companyName) correctedFields.push(`Betrieb: *${temp.companyName}*`);
+        if (before.employeeCount !== temp.employeeCount) correctedFields.push(`Mitarbeiter: *${temp.employeeCount}*`);
+        if (before.industry !== temp.industry) correctedFields.push(`Branche: *${temp.industryLabel}*`);
+        if (correctedFields.length > 0) {
+          await wa.sendMessage({ to: normalized, text: `Alles klar, korrigiert:\n${correctedFields.join('\n')} ✅` });
+        }
+        await saveSession(normalized, 'COLLECTING', temp);
+        await sendDsgvoRequest(normalized, temp);
+        return true;
+      }
+      // Fallthrough to regular AWAIT_CONSENT handling
+    }
+
     const YES = /^(ja|j|ok|okay|stimmt|einverstanden|akzeptiere|👍|✓|✅)/i.test(input);
     const NO  = /^(nein|n|nö|ablehnen|nicht|👎|❌)/i.test(input);
 
