@@ -12,6 +12,11 @@ const CONFIDENCE_APPLY = 0.70; // Mindest-Confidence für Übernahme
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+interface WaContact {
+  name: { formatted_name: string; first_name?: string; last_name?: string };
+  phones: Array<{ phone: string; type?: string }>;
+}
+
 interface TempData {
   // Onboarding-Daten
   ownerFirstName?: string;
@@ -280,13 +285,13 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
     include: { employees: true },
   });
 
-  await saveSession(phone, 'DONE', temp);
+  await saveSession(phone, 'AWAIT_EMPLOYEE_NUMBERS', temp);
 
   const extras: string[] = [];
   if (temp.gewerk) extras.push(`🔧 ${temp.gewerk}`);
   if (temp.autoReminder) extras.push(`⏰ Erinnerung täglich um ${temp.reminderTime ?? '18:00'} Uhr`);
   if (temp.stundenzettel) extras.push(`📋 Stundenzettel: aktiv`);
-  if (temp.baustelle) extras.push(`🏗 Baustellenmanagement: aktiv`);
+  if (temp.baustelle) extras.push(`🏗 Baustellenmonitoring: aktiv`);
 
   await wa.sendMessage({
     to: phone,
@@ -297,10 +302,9 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
       `\n_Einwilligung widerrufen: "Datenschutz löschen"_`,
   });
 
-  await wa.sendMessage({
-    to: phone,
-    text: `Leite das einfach an deine Mitarbeiter weiter:`,
-  });
+  const leistungen = temp.baustelle
+    ? `die digitale *Zeiterfassung und das Baustellenmonitoring*`
+    : `die digitale *Zeiterfassung*`;
 
   const stundenzettelHinweis = temp.stundenzettel
     ? `\n\nWenn ihr einen Stundenzettel vom Kunden unterschrieben bekommt, schickt das Dokument bitte als Foto per WhatsApp an diese Nummer – mit einem kurzen Kommentar zur Baustelle, damit es richtig zugeordnet wird.`
@@ -310,14 +314,18 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
     to: phone,
     text:
       `——————————————\n` +
-      `Dein Chef hat sich für *Rapido* entschieden – eine digitale Zeiterfassung per WhatsApp. ` +
-      `Alle Arbeitsabläufe bleiben so wie bisher, ihr bucht eure Zeiten einfach per Nachricht statt auf Papier. ` +
-      `Damit können endlich die rechtlichen Vorschriften eingehalten werden und dein Chef hat weniger Arbeit mit den lästigen Stundenzetteln.\n\n` +
-      `Schreib einmal *Ja* an diese Nummer, um dich anzumelden:\n\n` +
-      `📱 *+49 XXX XXXXXXX*\n\n` +
-      `– ${ownerName}, ${company.name}` +
+      `*${company.name}* nutzt ab sofort Rapido für ${leistungen} – komplett per WhatsApp, kein App-Download, kein Papierkram.\n\n` +
+      `Schreib einmal *Ja* an diese Nummer und du bist dabei:\n\n` +
+      `📱 *+49 XXX XXXXXXX*` +
       stundenzettelHinweis +
-      `\n——————————————`,
+      `\n\n– ${ownerName}\n——————————————`,
+  });
+
+  await wa.sendMessage({
+    to: phone,
+    text:
+      `Schick mir jetzt die Kontakte deiner Mitarbeiter direkt in den Chat – ich erstelle die Profile und verschicke die Einladungen automatisch.\n\n` +
+      `Wenn du fertig bist, schreib *Fertig*.`,
   });
 }
 
@@ -326,7 +334,7 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
 export async function handleCompanyOnboarding(
   phone: string,
   text: string,
-  options?: { messageId?: string; messageType?: string },
+  options?: { messageId?: string; messageType?: string; contacts?: WaContact[] },
 ): Promise<boolean> {
   const wa = getWhatsAppProvider();
   const normalized = phone.startsWith('+') ? phone : '+' + phone;
@@ -386,6 +394,81 @@ export async function handleCompanyOnboarding(
   if (session.step === 'DONE') {
     await prisma.companyOnboardingSession.delete({ where: { phone: normalized } });
     return false;
+  }
+
+  // ── AWAIT_EMPLOYEE_NUMBERS: Kontakte verarbeiten ──────────────────────────────
+  if (session.step === 'AWAIT_EMPLOYEE_NUMBERS') {
+    const wa = getWhatsAppProvider();
+    const contacts = options?.contacts ?? [];
+
+    // "Fertig" → Session schließen
+    if (/^(fertig|done|abschließen|abschluss|beenden|weiter|ok|okay)$/i.test(input)) {
+      await prisma.companyOnboardingSession.delete({ where: { phone: normalized } });
+      await wa.sendMessage({
+        to: normalized,
+        text: `Alles erledigt! ✅ Deine Mitarbeiter erhalten in Kürze ihre Einladung.\n\nBei Fragen schreib mir jederzeit.`,
+      });
+      return true;
+    }
+
+    if (contacts.length === 0) {
+      await wa.sendMessage({
+        to: normalized,
+        text:
+          `Schick mir die Kontakte deiner Mitarbeiter direkt aus deinem Telefonbuch – ` +
+          `einfach den Kontakt antippen und weiterleiten.\n\nWenn alle dabei sind, schreib *Fertig*.`,
+      });
+      return true;
+    }
+
+    // Kontakte verarbeiten
+    const { inviteEmployee } = await import('../onboarding/service');
+    const company = await prisma.company.findFirst({
+      where: { employees: { some: { phone: normalized, role: 'INHABER' } } },
+    });
+    if (!company) return true;
+
+    const confirmations: string[] = [];
+    for (const contact of contacts) {
+      const contactPhone = normalizeContactPhone(contact.phones[0]?.phone ?? '');
+      if (!contactPhone) continue;
+
+      const name = contact.name.formatted_name.trim();
+
+      // Duplikat-Check
+      const exists = await prisma.employee.findFirst({
+        where: { phone: contactPhone, companyId: company.id, deletedAt: null },
+      });
+      if (exists) {
+        confirmations.push(`⚠️ *${name}* ist bereits im System`);
+        continue;
+      }
+
+      const emp = await prisma.employee.create({
+        data: {
+          name,
+          phone: contactPhone,
+          companyId: company.id,
+          role: 'MITARBEITER',
+          employmentType: 'VOLLZEIT',
+          onboardingState: 'INVITED',
+          gdprConsent: false,
+        },
+      });
+
+      await inviteEmployee(emp.id);
+      confirmations.push(`✅ *${name}* eingeladen`);
+    }
+
+    await wa.sendMessage({
+      to: normalized,
+      text:
+        confirmations.join('\n') +
+        `\n\nNoch weitere Mitarbeiter? Einfach Kontakt schicken – oder schreib *Fertig*.`,
+    });
+
+    await saveSession(normalized, 'AWAIT_EMPLOYEE_NUMBERS', temp);
+    return true;
   }
 
   // ── Nicht-Text-Nachrichten ────────────────────────────────────────────────────
@@ -665,6 +748,20 @@ export async function handleCompanyOnboarding(
   }
 
   return true;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function normalizeContactPhone(raw: string): string {
+  // Strip whitespace, dashes, parentheses
+  let p = raw.replace(/[\s\-().]/g, '');
+  if (!p) return '';
+  // German local numbers starting with 0 → +49
+  if (p.startsWith('0')) p = '+49' + p.slice(1);
+  // Ensure + prefix
+  if (!p.startsWith('+')) p = '+' + p;
+  // Must be at least 10 digits
+  return /^\+\d{9,}$/.test(p) ? p : '';
 }
 
 // ─── DSGVO ───────────────────────────────────────────────────────────────────

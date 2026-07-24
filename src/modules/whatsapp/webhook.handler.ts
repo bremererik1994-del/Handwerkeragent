@@ -59,12 +59,35 @@ async function processInboundMessage(msg: WaMessage, phoneNumberId: string) {
     include: { company: { include: { settings: true } } },
   });
 
+  const msgType = msg.contacts ? 'contacts'
+    : msg.audio ? 'audio'
+    : msg.image ? 'image'
+    : msg.video ? 'video'
+    : msg.document ? 'document'
+    : 'text';
+
   if (!employee) {
-    const msgType = msg.audio ? 'audio' : msg.image ? 'image' : msg.video ? 'video' : msg.document ? 'document' : 'text';
-    const handled = await handleCompanyOnboarding(fromPhone, text, { messageId: msg.id, messageType: msgType });
+    const handled = await handleCompanyOnboarding(fromPhone, text, {
+      messageId: msg.id,
+      messageType: msgType,
+      contacts: msg.contacts,
+    });
     if (handled) return;
     console.log('[Webhook] unknown phone, no onboarding session:', maskPhone(fromPhone));
     return;
+  }
+
+  // INHABER mit offener Onboarding-Session (AWAIT_EMPLOYEE_NUMBERS) → zurück zum Onboarding
+  if (employee.role === 'INHABER') {
+    const pendingSession = await prisma.companyOnboardingSession.findUnique({ where: { phone: fromPhone } });
+    if (pendingSession?.step === 'AWAIT_EMPLOYEE_NUMBERS') {
+      await handleCompanyOnboarding(fromPhone, text, {
+        messageId: msg.id,
+        messageType: msgType,
+        contacts: msg.contacts,
+      });
+      return;
+    }
   }
 
   // Store inbound message
@@ -202,4 +225,8 @@ interface WaMessage {
   image?: { id: string; mime_type: string };
   video?: { id: string; mime_type: string };
   document?: { id: string; mime_type: string };
+  contacts?: Array<{
+    name: { formatted_name: string; first_name?: string; last_name?: string };
+    phones: Array<{ phone: string; type?: string }>;
+  }>;
 }
