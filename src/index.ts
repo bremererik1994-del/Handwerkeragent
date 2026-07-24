@@ -31,6 +31,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'uploads')));
 app.use(express.static(path.join(__dirname, '..', 'public'), { extensions: ['html'] }));
 
+import viewRoutes from './routes/view';
+app.use('/api/view', viewRoutes);
 app.use('/api', routes);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', env: config.nodeEnv }));

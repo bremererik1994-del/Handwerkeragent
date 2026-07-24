@@ -7,7 +7,6 @@ import timetrackingRoutes from '../modules/timetracking/routes';
 import locationRoutes from '../modules/location/routes';
 import payrollRoutes from '../modules/payroll/routes';
 import absenceRoutes from '../modules/absence/routes';
-
 const router = Router();
 
 // ─── WhatsApp Webhook (no auth) ───────────────────────────────────────────────
