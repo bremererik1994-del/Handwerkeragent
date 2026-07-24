@@ -37,6 +37,7 @@ export interface ExtractionResult {
     industry?: FieldExtraction<IndustryType>;
     gewerk?: FieldExtraction<string>;
     employeeCount?: EmployeeCountExtraction;
+    weeklyHours?: FieldExtraction<number>;
     autoReminder?: FieldExtraction<boolean>;
     reminderTime?: FieldExtraction<string>; // "HH:MM"
     stundenzettel?: FieldExtraction<boolean>;
@@ -57,8 +58,9 @@ const SYSTEM_PROMPT = `Du bist ein JSON-Extraktor für ein WhatsApp-Onboarding-S
 - industry: "HANDWERK" | "EINZELHANDEL" | "SONSTIGES"
 - gewerk: Freitext-Gewerk (z.B. "Elektro", "Sanitär/Heizung/Klima", auch Nischenberufe wie "Aufzugsbau")
 - employeeCount: Anzahl der Mitarbeiter als Zahl
+- weeklyHours: Wochenarbeitszeit in Stunden als Zahl (z.B. 40, 38, 35, 30); "1" → 40h, "2" → 35h, "3" → 30h (Menü-Auswahl)
 - autoReminder: true = Erinnerungen aktiv, false = deaktiviert
-- reminderTime: Uhrzeit als "HH:MM" (24h), z.B. "18:00"
+- reminderTime: Uhrzeit als "HH:MM" (24h), z.B. "17:00"
 - stundenzettel: true = Kunden unterschreiben Stundenzettel, false = nein
 - baustelle: true = Baustellenmanagement gewünscht, false = nein
 

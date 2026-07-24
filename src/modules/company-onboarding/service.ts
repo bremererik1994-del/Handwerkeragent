@@ -25,6 +25,7 @@ interface TempData {
   employeeCountIsRange?: boolean;
   employeeCountMin?: number;
   employeeCountMax?: number;
+  weeklyHours?: number;
   autoReminder?: boolean;
   reminderTime?: string;
   stundenzettel?: boolean;
@@ -41,7 +42,7 @@ interface TempData {
 
 type MissingField =
   | 'name' | 'companyName'
-  | 'employeeCount' | 'reminder' | 'stundenzettel' | 'baustelle';
+  | 'employeeCount' | 'weeklyHours' | 'reminder' | 'stundenzettel' | 'baustelle';
 
 // ─── Field Logic ──────────────────────────────────────────────────────────────
 
@@ -49,6 +50,7 @@ function getNextMissingField(temp: TempData): MissingField | null {
   if (!temp.ownerFirstName || !temp.ownerLastName) return 'name';
   if (!temp.companyName) return 'companyName';
   if (temp.employeeCount == null) return 'employeeCount';
+  if (temp.weeklyHours == null) return 'weeklyHours';
   if (temp.autoReminder === undefined) return 'reminder';
   if (temp.stundenzettel === undefined) return 'stundenzettel';
   if (temp.baustelle === undefined) return 'baustelle';
@@ -61,6 +63,7 @@ function getCollectedFields(temp: TempData): string[] {
   if (temp.ownerLastName) collected.push('ownerLastName');
   if (temp.companyName) collected.push('companyName');
   if (temp.employeeCount != null) collected.push('employeeCount');
+  if (temp.weeklyHours != null) collected.push('weeklyHours');
   if (temp.autoReminder !== undefined) collected.push('autoReminder');
   if (temp.stundenzettel !== undefined) collected.push('stundenzettel');
   if (temp.baustelle !== undefined) collected.push('baustelle');
@@ -80,9 +83,12 @@ function buildQuestion(field: MissingField, temp: TempData): string {
     case 'employeeCount':
       return `Wie viele Mitarbeiter hat dein Betrieb?`;
 
+    case 'weeklyHours':
+      return `Wie viele Stunden arbeiten deine Mitarbeiter pro Woche?\n\n1️⃣ 40 Stunden (Vollzeit)\n2️⃣ 35 Stunden\n3️⃣ 30 Stunden\n\nOder schreib einfach die Zahl, z.B. *38*.`;
+
     case 'reminder':
       return (
-        `Wir erinnern deine Mitarbeiter täglich um 18:00 Uhr, wenn eine Zeitbuchung fehlt.\n\n` +
+        `Wir erinnern deine Mitarbeiter täglich um 17:00 Uhr, wenn eine Zeitbuchung fehlt.\n\n` +
         `Wenn du eine andere Uhrzeit möchtest, nenn sie mir einfach. ` +
         `Oder schreib *Nein*, um die automatische Erinnerung zu deaktivieren.`
       );
@@ -114,6 +120,7 @@ function buildRecapAndQuestion(temp: TempData, nextField: MissingField): string 
   if (temp.ownerFirstName) parts.push(`Name: ${temp.ownerFirstName} ${temp.ownerLastName ?? ''}`.trim());
   if (temp.companyName) parts.push(`Betrieb: ${temp.companyName}`);
   if (temp.employeeCount != null) parts.push(`Mitarbeiter: ${temp.employeeCount}`);
+  if (temp.weeklyHours != null) parts.push(`Wochenarbeitszeit: ${temp.weeklyHours}h`);
 
   const recap = parts.length > 0
     ? `Kurze Zusammenfassung – wir waren hier:\n${parts.map(p => `• ${p}`).join('\n')}\n\n`
@@ -164,6 +171,8 @@ function applyExtraction(temp: TempData, extraction: ExtractionResult): {
       updated.employeeCount = fields.employeeCount.value;
     }
   }
+  if (fields.weeklyHours && fields.weeklyHours.confidence >= CONFIDENCE_APPLY)
+    updated.weeklyHours = fields.weeklyHours.value;
   if (fields.autoReminder && fields.autoReminder.confidence >= CONFIDENCE_APPLY)
     updated.autoReminder = fields.autoReminder.value;
   if (fields.reminderTime && fields.reminderTime.confidence >= CONFIDENCE_APPLY)
@@ -232,7 +241,7 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
       industry: 'HANDWERK',
       settings: {
         create: {
-          overtimeThresholdWeek: 40,
+          overtimeThresholdWeek: temp.weeklyHours ?? 40,
           sundaySurchargeRate: 100,
         },
       },
@@ -254,7 +263,7 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
   await saveSession(phone, 'AWAIT_EMPLOYEE_NUMBERS', temp);
 
   const extras: string[] = [];
-  if (temp.autoReminder) extras.push(`⏰ Erinnerung täglich um ${temp.reminderTime ?? '18:00'} Uhr`);
+  if (temp.autoReminder) extras.push(`⏰ Erinnerung täglich um ${temp.reminderTime ?? '17:00'} Uhr`);
   if (temp.stundenzettel) extras.push(`📋 Stundenzettel: aktiv`);
   if (temp.baustelle) extras.push(`🏗 Baustellenmonitoring: aktiv`);
 
@@ -263,6 +272,7 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
     text:
       `🎉 *${company.name} ist jetzt bei Rapido eingerichtet!*\n\n` +
       `👥 ${temp.employeeCount ?? '–'} Mitarbeiter\n` +
+      `⏱ ${temp.weeklyHours ?? 40}h Wochenarbeitszeit\n` +
       (extras.length ? extras.join('\n') + '\n' : '') +
       `\n_Einwilligung widerrufen: "Datenschutz löschen"_`,
   });
