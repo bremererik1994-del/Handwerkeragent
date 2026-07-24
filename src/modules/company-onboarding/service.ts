@@ -1,6 +1,5 @@
 import prisma from '../../db';
 import { getWhatsAppProvider } from '../whatsapp/index';
-import { IndustryType } from '@prisma/client';
 import { extractOnboardingData, ExtractionResult, Intent } from './extraction';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -22,9 +21,6 @@ interface TempData {
   ownerFirstName?: string;
   ownerLastName?: string;
   companyName?: string;
-  industry?: IndustryType;
-  industryLabel?: string;
-  gewerk?: string;
   employeeCount?: number;
   employeeCountIsRange?: boolean;
   employeeCountMin?: number;
@@ -44,7 +40,7 @@ interface TempData {
 }
 
 type MissingField =
-  | 'name' | 'companyName' | 'industry' | 'gewerk'
+  | 'name' | 'companyName'
   | 'employeeCount' | 'reminder' | 'stundenzettel' | 'baustelle';
 
 // ─── Field Logic ──────────────────────────────────────────────────────────────
@@ -52,8 +48,6 @@ type MissingField =
 function getNextMissingField(temp: TempData): MissingField | null {
   if (!temp.ownerFirstName || !temp.ownerLastName) return 'name';
   if (!temp.companyName) return 'companyName';
-  if (!temp.industry) return 'industry';
-  if (temp.industry === 'HANDWERK' && !temp.gewerk) return 'gewerk';
   if (temp.employeeCount == null) return 'employeeCount';
   if (temp.autoReminder === undefined) return 'reminder';
   if (temp.stundenzettel === undefined) return 'stundenzettel';
@@ -66,8 +60,6 @@ function getCollectedFields(temp: TempData): string[] {
   if (temp.ownerFirstName) collected.push('ownerFirstName');
   if (temp.ownerLastName) collected.push('ownerLastName');
   if (temp.companyName) collected.push('companyName');
-  if (temp.industry) collected.push('industry');
-  if (temp.gewerk) collected.push('gewerk');
   if (temp.employeeCount != null) collected.push('employeeCount');
   if (temp.autoReminder !== undefined) collected.push('autoReminder');
   if (temp.stundenzettel !== undefined) collected.push('stundenzettel');
@@ -84,18 +76,6 @@ function buildQuestion(field: MissingField, temp: TempData): string {
 
     case 'companyName':
       return `Wie heißt dein Betrieb?`;
-
-    case 'industry':
-      return `In welcher Branche bist du tätig?\n\n1️⃣ Handwerk\n2️⃣ Einzelhandel\n3️⃣ Gastronomie oder Sonstiges`;
-
-    case 'gewerk':
-      return (
-        `Welches Gewerk?\n\n` +
-        `1️⃣ Elektro\n2️⃣ Sanitär / Heizung / Klima\n3️⃣ Maler / Lackierer\n` +
-        `4️⃣ Maurer / Hochbau\n5️⃣ Zimmerer / Holzbau\n6️⃣ Dachdecker\n` +
-        `7️⃣ Fliesenleger\n8️⃣ Schreiner / Tischler\n9️⃣ Kfz / Mechatronik\n` +
-        `🔟 Garten- und Landschaftsbau\n1️⃣1️⃣ Sonstiges Handwerk`
-      );
 
     case 'employeeCount':
       return `Wie viele Mitarbeiter hat dein Betrieb?`;
@@ -133,8 +113,6 @@ function buildRecapAndQuestion(temp: TempData, nextField: MissingField): string 
   const parts: string[] = [];
   if (temp.ownerFirstName) parts.push(`Name: ${temp.ownerFirstName} ${temp.ownerLastName ?? ''}`.trim());
   if (temp.companyName) parts.push(`Betrieb: ${temp.companyName}`);
-  if (temp.industry) parts.push(`Branche: ${temp.industryLabel ?? temp.industry}`);
-  if (temp.gewerk) parts.push(`Gewerk: ${temp.gewerk}`);
   if (temp.employeeCount != null) parts.push(`Mitarbeiter: ${temp.employeeCount}`);
 
   const recap = parts.length > 0
@@ -147,8 +125,6 @@ function buildRecapAndQuestion(temp: TempData, nextField: MissingField): string 
 
 function answerFAQ(question: string): string | null {
   const q = question.toLowerCase();
-  if (/gewerk/.test(q))
-    return `Ein *Gewerk* ist dein Handwerksbereich – z.B. Elektro, Sanitär, Maler. Einfach deinen Bereich nennen oder eine Zahl aus der Liste.`;
   if (/daten|datenschutz|warum.*name|wieso.*nummer/.test(q))
     return `Deine Daten (Name, Handynummer, Zeitbuchungen) werden ausschließlich für die Zeiterfassung genutzt – kein Verkauf, kein Drittanbieter. Volle Details: rapido-handwerk.net/datenschutz`;
   if (/kost|preis|gratis|kostenlos|bezahl/.test(q))
@@ -179,15 +155,6 @@ function applyExtraction(temp: TempData, extraction: ExtractionResult): {
     updated.ownerLastName = fields.ownerLastName.value;
   if (fields.companyName && fields.companyName.confidence >= CONFIDENCE_APPLY)
     updated.companyName = fields.companyName.value;
-  if (fields.industry && fields.industry.confidence >= CONFIDENCE_APPLY) {
-    updated.industry = fields.industry.value;
-    updated.industryLabel =
-      fields.industry.value === 'HANDWERK' ? 'Handwerk'
-      : fields.industry.value === 'EINZELHANDEL' ? 'Einzelhandel'
-      : 'Gastronomie/Sonstiges';
-  }
-  if (fields.gewerk && fields.gewerk.confidence >= CONFIDENCE_APPLY)
-    updated.gewerk = fields.gewerk.value;
   if (fields.employeeCount && fields.employeeCount.confidence >= CONFIDENCE_APPLY) {
     if (fields.employeeCount.isRange) {
       updated.pendingRangeField = 'employeeCount';
@@ -213,7 +180,6 @@ function applyExtraction(temp: TempData, extraction: ExtractionResult): {
 
 function buildSkipConfirmations(before: TempData, after: TempData): string[] {
   const msgs: string[] = [];
-  if (!before.gewerk && after.gewerk) msgs.push(`Gewerk notiert: *${after.gewerk}* ✅`);
   if (before.employeeCount == null && after.employeeCount != null)
     msgs.push(`${after.employeeCount} Mitarbeiter – notiert ✅`);
   if (before.autoReminder === undefined && after.autoReminder !== undefined) {
@@ -263,11 +229,11 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
   const company = await prisma.company.create({
     data: {
       name: temp.companyName ?? ownerName,
-      industry: temp.industry ?? 'SONSTIGES',
+      industry: 'HANDWERK',
       settings: {
         create: {
-          overtimeThresholdWeek: temp.industry === 'HANDWERK' ? 40 : 38,
-          sundaySurchargeRate: temp.industry === 'HANDWERK' ? 100 : 50,
+          overtimeThresholdWeek: 40,
+          sundaySurchargeRate: 100,
         },
       },
       employees: {
@@ -288,7 +254,6 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
   await saveSession(phone, 'AWAIT_EMPLOYEE_NUMBERS', temp);
 
   const extras: string[] = [];
-  if (temp.gewerk) extras.push(`🔧 ${temp.gewerk}`);
   if (temp.autoReminder) extras.push(`⏰ Erinnerung täglich um ${temp.reminderTime ?? '18:00'} Uhr`);
   if (temp.stundenzettel) extras.push(`📋 Stundenzettel: aktiv`);
   if (temp.baustelle) extras.push(`🏗 Baustellenmonitoring: aktiv`);
@@ -324,7 +289,7 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
   await wa.sendMessage({
     to: phone,
     text:
-      `Schick mir jetzt die Kontakte deiner Mitarbeiter direkt in den Chat – ich erstelle die Profile und verschicke die Einladungen automatisch.\n\n` +
+      `Schick mir jetzt einfach die Kontakte deiner Mitarbeiter direkt in den Chat – ich erstelle die Profile und zeige dir danach deine personalisierte Übersichtsseite, die du jederzeit aufrufen kannst.\n\n` +
       `Wenn du fertig bist, schreib *Fertig*.`,
   });
 }
@@ -401,12 +366,16 @@ export async function handleCompanyOnboarding(
     const wa = getWhatsAppProvider();
     const contacts = options?.contacts ?? [];
 
-    // "Fertig" → Session schließen
+    // "Fertig" → Dashboard-Link schicken + Session schließen
     if (/^(fertig|done|abschließen|abschluss|beenden|weiter|ok|okay)$/i.test(input)) {
+      const company = await prisma.company.findFirst({
+        where: { employees: { some: { phone: normalized, role: 'INHABER' } } },
+        select: { dashboardToken: true },
+      });
       await prisma.companyOnboardingSession.delete({ where: { phone: normalized } });
       await wa.sendMessage({
         to: normalized,
-        text: `Alles erledigt! ✅ Deine Mitarbeiter erhalten in Kürze ihre Einladung.\n\nBei Fragen schreib mir jederzeit.`,
+        text: `Alles erledigt! ✅ Deine Mitarbeiter erhalten in Kürze ihre Einladung.\n\nHier ist deine persönliche Übersichtsseite – nur für dich:\n\n🔗 https://rapido-handwerk.net/view/${company?.dashboardToken ?? ''}\n\nDort siehst du alle Stunden, Abwesenheiten und Baustellen in Echtzeit und kannst Einträge korrigieren sowie CSV-Exporte herunterladen.`,
       });
       return true;
     }
@@ -522,7 +491,6 @@ export async function handleCompanyOnboarding(
           correctedFields.push(`Name: *${temp.ownerFirstName} ${temp.ownerLastName}*`);
         if (before.companyName !== temp.companyName) correctedFields.push(`Betrieb: *${temp.companyName}*`);
         if (before.employeeCount !== temp.employeeCount) correctedFields.push(`Mitarbeiter: *${temp.employeeCount}*`);
-        if (before.industry !== temp.industry) correctedFields.push(`Branche: *${temp.industryLabel}*`);
         if (correctedFields.length > 0) {
           await wa.sendMessage({ to: normalized, text: `Alles klar, korrigiert:\n${correctedFields.join('\n')} ✅` });
         }
