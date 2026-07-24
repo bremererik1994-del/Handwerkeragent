@@ -8,245 +8,281 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #F1F5F9;
-      --surface:   #FFFFFF;
-      --border:    #E2E8F0;
-      --text:      #0F172A;
-      --muted:     #64748B;
-      --accent:    #2563EB;
-      --accent-bg: #EFF6FF;
-      --green:     #16A34A;
-      --green-bg:  #F0FDF4;
-      --amber:     #D97706;
-      --amber-bg:  #FFFBEB;
-      --red:       #DC2626;
-      --red-bg:    #FEF2F2;
-      --shadow:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
-      --radius:    10px;
+      --bg: #f3f4f6;
+      --surface: #ffffff;
+      --border: #e5e7eb;
+      --divider: #f3f4f6;
+      --text: #111827;
+      --text-2: #6b7280;
+      --text-3: #9ca3af;
+      --accent: #0d9488;
+      --accent-h: #0f766e;
+      --accent-light: #f0fdfa;
+      --accent-text: #0f766e;
+      --amber: #f59e0b;
+      --amber-light: #fffbeb;
+      --amber-text: #92400e;
+      --emerald: #10b981;
+      --emerald-light: #f0fdf4;
+      --red: #ef4444;
+      --red-light: #fef2f2;
+      --red-text: #991b1b;
+      --header-bg: #ffffff;
+      --chip-bg: #f3f4f6;
+      --progress-track: #e5e7eb;
+      --icon-bg: #f3f4f6;
+      --toast-bg: #111827;
+      --toast-text: #ffffff;
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg:        #0F172A;
-        --surface:   #1E293B;
-        --border:    #334155;
-        --text:      #F1F5F9;
-        --muted:     #94A3B8;
-        --accent:    #3B82F6;
-        --accent-bg: #1E3A5F;
-        --green:     #4ADE80;
-        --green-bg:  #052E16;
-        --amber:     #FBBF24;
-        --amber-bg:  #1C1400;
-        --red:       #F87171;
-        --red-bg:    #2D0000;
-        --shadow:    0 1px 3px rgba(0,0,0,.3);
-      }
-    }
-    :root[data-theme="light"] { --bg:#F1F5F9;--surface:#FFFFFF;--border:#E2E8F0;--text:#0F172A;--muted:#64748B;--accent:#2563EB;--accent-bg:#EFF6FF;--green:#16A34A;--green-bg:#F0FDF4;--amber:#D97706;--amber-bg:#FFFBEB;--red:#DC2626;--red-bg:#FEF2F2;--shadow:0 1px 3px rgba(0,0,0,.08);--radius:10px; }
-    :root[data-theme="dark"]  { --bg:#0F172A;--surface:#1E293B;--border:#334155;--text:#F1F5F9;--muted:#94A3B8;--accent:#3B82F6;--accent-bg:#1E3A5F;--green:#4ADE80;--green-bg:#052E16;--amber:#FBBF24;--amber-bg:#1C1400;--red:#F87171;--red-bg:#2D0000;--shadow:0 1px 3px rgba(0,0,0,.3);--radius:10px; }
+    @media (prefers-color-scheme: dark) { :root {
+      --bg:#0f172a; --surface:#1e293b; --border:#334155; --divider:#1e293b;
+      --text:#f1f5f9; --text-2:#94a3b8; --text-3:#64748b;
+      --accent:#14b8a6; --accent-h:#0d9488; --accent-light:#0f2722; --accent-text:#5eead4;
+      --amber:#fbbf24; --amber-light:#1c1407; --amber-text:#fde68a;
+      --emerald:#34d399; --emerald-light:#052e16;
+      --red:#f87171; --red-light:#2d0000; --red-text:#fca5a5;
+      --header-bg:#1e293b; --chip-bg:#1e293b; --progress-track:#334155;
+      --icon-bg:#334155; --toast-bg:#f1f5f9; --toast-text:#111827;
+    }}
+    :root[data-theme="light"] { --bg:#f3f4f6;--surface:#ffffff;--border:#e5e7eb;--divider:#f3f4f6;--text:#111827;--text-2:#6b7280;--text-3:#9ca3af;--accent:#0d9488;--accent-h:#0f766e;--accent-light:#f0fdfa;--accent-text:#0f766e;--amber:#f59e0b;--amber-light:#fffbeb;--amber-text:#92400e;--emerald:#10b981;--emerald-light:#f0fdf4;--red:#ef4444;--red-light:#fef2f2;--red-text:#991b1b;--header-bg:#ffffff;--chip-bg:#f3f4f6;--progress-track:#e5e7eb;--icon-bg:#f3f4f6;--toast-bg:#111827;--toast-text:#ffffff; }
+    :root[data-theme="dark"]  { --bg:#0f172a;--surface:#1e293b;--border:#334155;--divider:#1e293b;--text:#f1f5f9;--text-2:#94a3b8;--text-3:#64748b;--accent:#14b8a6;--accent-h:#0d9488;--accent-light:#0f2722;--accent-text:#5eead4;--amber:#fbbf24;--amber-light:#1c1407;--amber-text:#fde68a;--emerald:#34d399;--emerald-light:#052e16;--red:#f87171;--red-light:#2d0000;--red-text:#fca5a5;--header-bg:#1e293b;--chip-bg:#1e293b;--progress-track:#334155;--icon-bg:#334155;--toast-bg:#f1f5f9;--toast-text:#111827; }
 
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; padding-bottom: 60px; }
 
     /* ── Header ── */
-    .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
-    .logo { font-size: 18px; font-weight: 800; color: var(--accent); letter-spacing: -.02em; }
-    .company-name { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--border); }
-    .header-right { display: flex; align-items: center; gap: 12px; }
-    .refresh-badge { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
-    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-    /* ── Layout ── */
-    .main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 24px; }
+    header { background: var(--header-bg); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
+    .header-inner { max-width: 640px; margin: 0 auto; padding: 12px 16px; }
+    .brand { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .brand-logo { font-weight: 700; font-size: 17px; color: var(--accent); letter-spacing: -.02em; }
+    .brand-sep { color: var(--border); }
+    .brand-name { font-weight: 600; font-size: 15px; }
+    .brand-pulse { display: flex; align-items: center; gap: 5px; margin-left: auto; font-size: 11px; color: var(--text-3); }
+    .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.35} }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: var(--chip-bg); color: var(--text-2); white-space: nowrap; }
+    .chip-teal { background: var(--accent-light); color: var(--accent-text); font-weight: 600; }
 
     /* ── Tabs ── */
-    .tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; width: fit-content; }
-    .tab { padding: 6px 16px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted); border: none; background: none; transition: background .15s, color .15s; }
+    .tab-bar { max-width: 640px; margin: 0 auto; padding: 16px 16px 0; }
+    .tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; width: fit-content; }
+    .tab { padding: 6px 16px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-2); border: none; background: none; transition: background .15s, color .15s; }
     .tab.active { background: var(--accent); color: #fff; }
-    .tab-panel { display: none; } .tab-panel.active { display: contents; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    #lastUpdate { font-size: 11px; color: var(--text-3); margin-left: 10px; }
 
-    /* ── Stat cards ── */
-    .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow); }
-    .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
-    .stat-value { font-size: 28px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1; }
-    .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    /* ── Main ── */
+    main { max-width: 640px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 20px; }
 
-    /* ── Section ── */
-    .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-    .section-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
-    .section-title { font-size: 14px; font-weight: 700; }
-    .section-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    /* ── Section label ── */
+    .slabel { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .cnt-badge { background: var(--amber-light); color: var(--amber); font-weight: 700; font-size: 11px; border-radius: 20px; padding: 1px 7px; }
 
-    /* ── Table ── */
-    .tbl-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
-    td { padding: 11px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--bg); }
+    /* ── Cards ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .card-list { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .card-list > * + * { border-top: 1px solid var(--divider); }
+    .card-pad { padding: 14px 16px; }
+
+    /* ── Row layouts ── */
+    .row-std { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
+    .row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; }
+
+    /* ── Status dot ── */
+    .sdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .sdot-active { background: var(--emerald); box-shadow: 0 0 0 2px color-mix(in srgb,var(--emerald) 25%,transparent); }
+    .sdot-done   { background: #6ee7b7; }
+    .sdot-away   { background: var(--amber); }
+    .sdot-grey   { background: var(--text-3); }
+
+    /* ── Running pill ── */
+    .running-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--emerald); }
+    .running-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); animation: pulse 1.5s infinite; }
+
+    /* ── Employee info ── */
+    .emp-info { flex: 1; min-width: 0; }
+    .emp-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+    .emp-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .emp-sub  { font-size: 13px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+    .emp-type { font-size: 11px; color: var(--text-3); flex-shrink: 0; }
+
+    /* ── Progress ── */
+    .woche-section { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .woche-row {}
+    .woche-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .woche-name { font-size: 14px; font-weight: 500; }
+    .woche-num  { font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+    .prog-track { height: 6px; border-radius: 3px; background: var(--progress-track); overflow: hidden; }
+    .prog-bar   { height: 100%; border-radius: 3px; background: var(--accent); transition: width .4s; }
+    .prog-zero  { background: var(--progress-track); }
+    .woche-note { font-size: 11px; color: var(--text-3); }
 
     /* ── Badges ── */
     .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
-    .badge-green  { background: var(--green-bg); color: var(--green); }
-    .badge-amber  { background: var(--amber-bg); color: var(--amber); }
-    .badge-red    { background: var(--red-bg);   color: var(--red); }
-    .badge-blue   { background: var(--accent-bg); color: var(--accent); }
-    .badge-gray   { background: var(--border); color: var(--muted); }
+    .badge-green  { background: var(--emerald-light); color: var(--emerald); }
+    .badge-amber  { background: var(--amber-light); color: var(--amber); }
+    .badge-red    { background: var(--red-light); color: var(--red); }
+    .badge-teal   { background: var(--accent-light); color: var(--accent-text); }
+    .badge-grey   { background: var(--chip-bg); color: var(--text-2); }
 
     /* ── Buttons ── */
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: opacity .15s; white-space: nowrap; }
-    .btn:hover { opacity: .85; }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-outline { background: transparent; border-color: var(--border); color: var(--text); }
-    .btn-green   { background: var(--green); color: #fff; }
-    .btn-red     { background: var(--red); color: #fff; }
+    .btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: background .12s; white-space: nowrap; }
+    .btn-primary  { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-h); }
+    .btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text-2); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-green  { background: var(--emerald-light); color: var(--emerald); }
+    .btn-red    { background: var(--red-light); color: var(--red); }
     .btn-sm { padding: 4px 10px; font-size: 11px; }
+    .btn-full { width: 100%; justify-content: center; padding: 13px 16px; font-size: 14px; border-radius: 12px; }
 
-    /* ── Active entry row ── */
-    .running-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--green); }
-    .running-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
+    /* ── Entry actions ── */
+    .entry-actions { display: flex; gap: 4px; flex-shrink: 0; }
 
-    /* ── Empty state ── */
-    .empty { padding: 32px; text-align: center; color: var(--muted); font-size: 13px; }
+    /* ── Date range ── */
+    .date-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--divider); }
+    .date-row input { padding: 5px 8px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font-size: 12px; }
+    .date-row label { font-size: 11px; color: var(--text-2); font-weight: 500; }
+
+    /* ── Empty ── */
+    .empty { padding: 28px; text-align: center; color: var(--text-3); font-size: 13px; }
+
+    /* ── Absence actions ── */
+    .abs-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; flex-wrap: wrap; }
+    .abs-info { flex: 1; min-width: 0; }
+    .abs-name { font-weight: 600; font-size: 14px; }
+    .abs-meta { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+    /* ── Baustelle ── */
+    .bl-row { padding: 12px 16px; }
+    .bl-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .bl-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 
     /* ── Modal ── */
-    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
     .modal-bg.open { display: flex; }
-    .modal { background: var(--surface); border-radius: 14px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
-    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 0; }
+    .modal { background: var(--surface); border-radius: 16px; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 18px 0; }
     .modal-title { font-size: 15px; font-weight: 700; }
-    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); line-height: 1; }
-    .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-    .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .06em; }
-    .field input { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); color: var(--text); font-size: 14px; }
+    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-2); line-height: 1; }
+    .modal-body { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .06em; }
+    .field input { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 14px; }
     .field input:focus { outline: 2px solid var(--accent); border-color: transparent; }
-    .modal-foot { display: flex; gap: 8px; justify-content: flex-end; padding: 0 20px 20px; }
-
-    /* ── Export row ── */
-    .export-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid var(--border); background: var(--bg); }
-    .export-label { font-size: 12px; color: var(--muted); font-weight: 500; }
-    .date-range { display: flex; gap: 6px; align-items: center; }
-    .date-range input { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 12px; }
+    .modal-foot { display: flex; gap: 8px; justify-content: flex-end; padding: 0 18px 18px; }
 
     /* ── Toast ── */
-    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1E293B; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; transition: transform .3s; z-index: 300; pointer-events: none; }
-    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--toast-bg); color: var(--toast-text); font-size: 13px; font-weight: 500; border-radius: 24px; padding: 9px 18px; display: flex; align-items: center; gap: 7px; box-shadow: 0 4px 20px rgba(0,0,0,.18); opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; white-space: nowrap; z-index: 300; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
 
-<header class="header">
-  <div style="display:flex;align-items:center">
-    <span class="logo">⚡ Rapido</span>
-    <span class="company-name" id="companyName">Laden…</span>
-  </div>
-  <div class="header-right">
-    <span class="refresh-badge"><span class="dot"></span> Echtzeit</span>
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#fbbf24" stroke="#f59e0b" stroke-width="1"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <span class="brand-logo">Rapido</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name" id="companyName">Laden…</span>
+      <div class="brand-pulse">
+        <div class="pulse-dot"></div> Echtzeit
+      </div>
+    </div>
+    <div class="chips">
+      <span class="chip chip-teal" id="chip-week"></span>
+      <span class="chip">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="chip-hours">– h Soll</span>
+      </span>
+      <span class="chip">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span id="chip-reminder">–</span>
+      </span>
+    </div>
   </div>
 </header>
 
-<main class="main">
-
-  <!-- Tabs -->
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+<div class="tab-bar">
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
     <div class="tabs">
       <button class="tab active" onclick="showTab('stunden')">Stunden</button>
       <button class="tab" onclick="showTab('abwesenheiten')">Abwesenheiten</button>
       <button class="tab" onclick="showTab('baustellen')">Baustellen</button>
     </div>
-    <span id="lastUpdate" style="font-size:11px;color:var(--muted)"></span>
+    <span id="lastUpdate"></span>
   </div>
+</div>
 
-  <!-- Stats -->
-  <div class="stats" id="stats">
-    <div class="stat"><div class="stat-label">Aktiv jetzt</div><div class="stat-value" id="s-aktiv">–</div><div class="stat-sub">Mitarbeiter im Einsatz</div></div>
-    <div class="stat"><div class="stat-label">Stunden diese Woche</div><div class="stat-value" id="s-week">–</div><div class="stat-sub">alle Mitarbeiter</div></div>
-    <div class="stat"><div class="stat-label">Abwesenheiten</div><div class="stat-value" id="s-absent">–</div><div class="stat-sub">diesen Monat</div></div>
-    <div class="stat"><div class="stat-label">Mitarbeiter</div><div class="stat-value" id="s-total">–</div><div class="stat-sub">aktiv registriert</div></div>
-  </div>
+<!-- ── TAB STUNDEN ── -->
+<div id="tab-stunden" class="tab-panel active">
+<main>
 
-  <!-- ── TAB: STUNDEN ── -->
-  <div id="tab-stunden" class="tab-panel active">
+  <!-- Aktive Schichten -->
+  <section>
+    <div class="slabel">
+      <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#10b981"/></svg>
+      Aktive Schichten
+    </div>
+    <div class="card-list" id="running-list">
+      <div class="empty">Niemand arbeitet gerade.</div>
+    </div>
+  </section>
 
-    <!-- Aktive Schichten -->
-    <div class="section" id="running-section">
-      <div class="section-head">
-        <span class="section-title">🟢 Aktive Schichten</span>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Mitarbeiter</th><th>Gestartet</th><th>Dauer</th><th>Baustelle</th><th></th></tr></thead>
-          <tbody id="running-body"><tr><td colspan="5" class="empty">Niemand arbeitet gerade.</td></tr></tbody>
-        </table>
+  <!-- Diese Woche -->
+  <section>
+    <div class="slabel">Diese Woche</div>
+    <div class="card">
+      <div class="woche-section" id="week-section">
+        <div class="empty" style="padding:8px 0">Keine Buchungen.</div>
       </div>
     </div>
-
-    <!-- Wochenübersicht -->
-    <div class="section">
-      <div class="section-head">
-        <span class="section-title">📅 Diese Woche</span>
-        <div class="section-actions">
-          <div class="date-range">
-            <input type="date" id="von" title="Von">
-            <span style="color:var(--muted);font-size:12px">–</span>
-            <input type="date" id="bis" title="Bis">
-          </div>
-          <button class="btn btn-outline btn-sm" onclick="exportCSV('stunden')">⬇ CSV Stunden</button>
-        </div>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Mitarbeiter</th><th>Buchungen</th><th>Stunden</th><th>Mo</th><th>Di</th><th>Mi</th><th>Do</th><th>Fr</th><th>Sa</th><th>So</th><th></th></tr></thead>
-          <tbody id="week-body"><tr><td colspan="11" class="empty">Keine Buchungen diese Woche.</td></tr></tbody>
-        </table>
-      </div>
+    <div style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <input type="date" id="von" style="padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);font-size:12px">
+      <span style="font-size:11px;color:var(--text-3)">–</span>
+      <input type="date" id="bis" style="padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);font-size:12px">
+      <button class="btn btn-secondary btn-sm" onclick="exportCSV('stunden')">⬇ CSV Stunden</button>
     </div>
+  </section>
 
-    <!-- Alle Einträge -->
-    <div class="section">
-      <div class="section-head">
-        <span class="section-title">📋 Alle Einträge (Woche)</span>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Mitarbeiter</th><th>Datum</th><th>Start</th><th>Ende</th><th>Pause</th><th>Gesamt</th><th>Ort</th><th></th></tr></thead>
-          <tbody id="entries-body"><tr><td colspan="8" class="empty">Keine Einträge.</td></tr></tbody>
-        </table>
-      </div>
+  <!-- Alle Einträge -->
+  <section>
+    <div class="slabel">Alle Einträge (Woche)</div>
+    <div class="card-list" id="entries-list">
+      <div class="empty">Keine Einträge.</div>
     </div>
-
-  </div>
-
-  <!-- ── TAB: ABWESENHEITEN ── -->
-  <div id="tab-abwesenheiten" class="tab-panel">
-    <div class="section">
-      <div class="section-head">
-        <span class="section-title">🤒 Abwesenheiten diesen Monat</span>
-        <div class="section-actions">
-          <button class="btn btn-outline btn-sm" onclick="exportCSV('abwesenheiten')">⬇ CSV Abwesenheiten</button>
-        </div>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Mitarbeiter</th><th>Art</th><th>Von</th><th>Bis</th><th>Tage</th><th>Status</th><th></th></tr></thead>
-          <tbody id="absence-body"><tr><td colspan="7" class="empty">Keine Abwesenheiten.</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── TAB: BAUSTELLEN ── -->
-  <div id="tab-baustellen" class="tab-panel">
-    <div class="section">
-      <div class="section-head">
-        <span class="section-title">🏗 Aktive Baustellen</span>
-      </div>
-      <div id="baustellen-body" class="empty">Keine aktiven Baustellen.</div>
-    </div>
-  </div>
+  </section>
 
 </main>
+</div>
+
+<!-- ── TAB ABWESENHEITEN ── -->
+<div id="tab-abwesenheiten" class="tab-panel">
+<main>
+  <section>
+    <div class="slabel" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Abwesenheiten diesen Monat</span>
+      <button class="btn btn-secondary btn-sm" onclick="exportCSV('abwesenheiten')">⬇ CSV</button>
+    </div>
+    <div class="card-list" id="absence-list">
+      <div class="empty">Keine Abwesenheiten.</div>
+    </div>
+  </section>
+</main>
+</div>
+
+<!-- ── TAB BAUSTELLEN ── -->
+<div id="tab-baustellen" class="tab-panel">
+<main>
+  <section>
+    <div class="slabel">Aktive Baustellen</div>
+    <div class="card-list" id="baustellen-list">
+      <div class="empty">Keine aktiven Baustellen.</div>
+    </div>
+  </section>
+</main>
+</div>
 
 <!-- Edit Modal -->
 <div class="modal-bg" id="editModal">
@@ -261,7 +297,7 @@
       <div class="field"><label>Pause (Minuten)</label><input type="number" id="edit-break" min="0" max="480"></div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-outline" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
       <button class="btn btn-primary" onclick="saveEdit()">Speichern</button>
     </div>
   </div>
@@ -274,39 +310,43 @@ const token = location.pathname.split('/').pop();
 const API = `/api/view/${token}`;
 let data = null;
 let editId = null;
+const WOCHEN_SOLL = 40; // fallback, ideally from settings
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function showTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    const panels = ['stunden','abwesenheiten','baustellen'];
-    t.classList.toggle('active', panels[i] === name);
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['stunden','abwesenheiten','baustellen'][i] === name);
   });
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
 }
 
-// ── Fetch & render ────────────────────────────────────────────────────────────
+// ── Fetch ─────────────────────────────────────────────────────────────────────
 async function load() {
   try {
     const r = await fetch(API);
     if (!r.ok) { document.getElementById('companyName').textContent = 'Ungültiger Link'; return; }
     data = await r.json();
     render();
-    document.getElementById('lastUpdate').textContent = 'Aktualisiert: ' + new Date().toLocaleTimeString('de-DE');
-  } catch(e) {
-    console.error(e);
-  }
+    document.getElementById('lastUpdate').textContent = 'Stand: ' + new Date().toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'});
+  } catch(e) { console.error(e); }
 }
 
+// ── Render ────────────────────────────────────────────────────────────────────
 function render() {
-  document.getElementById('companyName').textContent = data.company.name;
-  document.title = `${data.company.name} – Rapido Übersicht`;
+  const name = data.company.name;
+  document.getElementById('companyName').textContent = name;
+  document.title = name + ' – Rapido';
 
-  const totalWeekMin = data.weekEntries.reduce((s,e) => s + (e.totalMinutes || 0), 0);
-  document.getElementById('s-aktiv').textContent = data.runningEntries.length;
-  document.getElementById('s-week').textContent = fmtH(totalWeekMin);
-  document.getElementById('s-absent').textContent = data.monthAbsences.length;
-  document.getElementById('s-total').textContent = data.employees.length;
+  // KW chip
+  const now = new Date();
+  const kw = getKW(now);
+  const mon = mondayOf(now);
+  const fri = new Date(mon); fri.setDate(fri.getDate() + 4);
+  document.getElementById('chip-week').textContent =
+    `KW ${kw} · ${fmt2(mon.getDate())}.${fmt2(mon.getMonth()+1)}. – ${fmt2(fri.getDate())}.${fmt2(fri.getMonth()+1)}.`;
+  document.getElementById('chip-hours').textContent = `${WOCHEN_SOLL} h Soll`;
+  document.getElementById('chip-reminder').textContent = 'Erinnerung 17:00';
 
   renderRunning();
   renderWeek();
@@ -315,145 +355,149 @@ function render() {
   renderBaustellen();
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmt2(n) { return String(n).padStart(2,'0'); }
+function mondayOf(d) {
+  const r = new Date(d); r.setDate(d.getDate() - ((d.getDay()+6)%7)); r.setHours(0,0,0,0); return r;
+}
+function getKW(d) {
+  const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay()+6)%7) + 3);
+  const jan4 = new Date(thu.getFullYear(), 0, 4);
+  return 1 + Math.round((thu - jan4) / 604800000);
+}
 function fmtH(min) {
   if (!min) return '0h';
-  const h = Math.floor(min / 60), m = min % 60;
+  const h = Math.floor(min/60), m = min%60;
   return m ? `${h}h ${m}m` : `${h}h`;
 }
-
-function fmtDT(iso) {
-  if (!iso) return '–';
-  return new Date(iso).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-}
-
-function fmtDate(iso) {
-  if (!iso) return '–';
-  return new Date(iso).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'2-digit' });
-}
-
 function fmtTime(iso) {
   if (!iso) return '–';
-  return new Date(iso).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+  return new Date(iso).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
 }
-
+function fmtDate(iso) {
+  if (!iso) return '–';
+  return new Date(iso).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+}
 function elapsed(iso) {
   const ms = Date.now() - new Date(iso).getTime();
-  const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+  const h = Math.floor(ms/3600000), m = Math.floor((ms%3600000)/60000);
   return h ? `${h}h ${m}m` : `${m}m`;
 }
 
 // ── Running ───────────────────────────────────────────────────────────────────
 function renderRunning() {
-  const tb = document.getElementById('running-body');
+  const el = document.getElementById('running-list');
   if (!data.runningEntries.length) {
-    tb.innerHTML = '<tr><td colspan="5" class="empty">Niemand arbeitet gerade.</td></tr>';
-    return;
+    el.innerHTML = '<div class="empty">Niemand arbeitet gerade.</div>'; return;
   }
-  tb.innerHTML = data.runningEntries.map(e => `
-    <tr>
-      <td><strong>${e.employee.name}</strong></td>
-      <td>${fmtTime(e.startTime)}</td>
-      <td><span class="running-pill"><span class="running-dot"></span>${elapsed(e.startTime)}</span></td>
-      <td>${e.location ? `<span class="badge badge-blue">${e.location.name}</span>` : '<span class="badge badge-gray">–</span>'}</td>
-      <td><button class="btn btn-outline btn-sm" onclick="openEdit('${e.id}','${e.startTime}','${e.endTime||''}',${e.breakMinutes})">Bearbeiten</button></td>
-    </tr>`).join('');
+  el.innerHTML = data.runningEntries.map(e => `
+    <div class="row-std">
+      <div class="sdot sdot-active"></div>
+      <div class="emp-info">
+        <div class="emp-top">
+          <span class="emp-name">${e.employee.name}</span>
+          <span class="emp-type"><span class="running-pill"><span class="running-dot"></span>${elapsed(e.startTime)}</span></span>
+        </div>
+        <div class="emp-sub">Seit ${fmtTime(e.startTime)}${e.location ? ' · ' + e.location.name : ''}</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="openEdit('${e.id}','${e.startTime}','${e.endTime||''}',${e.breakMinutes})">✏</button>
+    </div>`).join('');
 }
 
-// ── Week summary per employee ─────────────────────────────────────────────────
+// ── Week summary ──────────────────────────────────────────────────────────────
 function renderWeek() {
-  const tb = document.getElementById('week-body');
-  if (!data.employees.length) { tb.innerHTML = '<tr><td colspan="11" class="empty">Keine Mitarbeiter.</td></tr>'; return; }
+  const el = document.getElementById('week-section');
+  if (!data.employees.length) { el.innerHTML = '<div class="empty" style="padding:8px 0">Keine Mitarbeiter.</div>'; return; }
 
-  const mon = new Date(); mon.setDate(mon.getDate() - ((mon.getDay()+6)%7)); mon.setHours(0,0,0,0);
+  const mon = mondayOf(new Date());
   const days = Array.from({length:7}, (_,i) => { const d = new Date(mon); d.setDate(d.getDate()+i); return d; });
+  const soll = WOCHEN_SOLL;
 
-  tb.innerHTML = data.employees.map(emp => {
-    const empEntries = data.weekEntries.filter(e => e.employee.id === emp.id);
-    const total = empEntries.reduce((s,e) => s + (e.totalMinutes||0), 0);
-    const dayMin = days.map(d => {
-      const dayEntries = empEntries.filter(e => {
-        const ed = new Date(e.startTime); ed.setHours(0,0,0,0);
-        return ed.getTime() === d.getTime();
-      });
-      return dayEntries.reduce((s,e) => s + (e.totalMinutes||0), 0);
-    });
+  const rows = data.employees.map(emp => {
+    const empE = data.weekEntries.filter(e => e.employee.id === emp.id);
+    const ist = empE.reduce((s,e) => s+(e.totalMinutes||0), 0);
+    const pct = Math.min(100, Math.round(ist/soll*100));
+    const istStr = (ist/60).toFixed(1).replace('.',',');
     const isActive = data.runningEntries.some(e => e.employee.id === emp.id);
-    return `<tr>
-      <td>
-        <div style="font-weight:600">${emp.name}</div>
-        <div style="font-size:11px;color:var(--muted)">${emp.employmentType}</div>
-        ${isActive ? '<span class="running-pill" style="font-size:11px"><span class="running-dot"></span>aktiv</span>' : ''}
-      </td>
-      <td style="font-variant-numeric:tabular-nums">${empEntries.length}</td>
-      <td style="font-weight:700;font-variant-numeric:tabular-nums">${fmtH(total)}</td>
-      ${dayMin.map(m => `<td style="font-variant-numeric:tabular-nums;color:${m?'var(--text)':'var(--muted)'}">${m ? fmtH(m) : '–'}</td>`).join('')}
-      <td></td>
-    </tr>`;
+    return `<div class="woche-row">
+      <div class="woche-top">
+        <span class="woche-name">${emp.name}${isActive ? ' <span class="running-pill" style="font-size:11px"><span class="running-dot"></span></span>' : ''}</span>
+        <span class="woche-num">${istStr} / ${soll} h</span>
+      </div>
+      <div class="prog-track"><div class="${ist===0?'prog-bar prog-zero':'prog-bar'}" style="width:${Math.max(pct,2)}%"></div></div>
+    </div>`;
   }).join('');
+  el.innerHTML = rows;
 }
 
 // ── All entries ───────────────────────────────────────────────────────────────
 function renderEntries() {
-  const tb = document.getElementById('entries-body');
-  const all = [...data.weekEntries, ...data.runningEntries.map(e => ({...e, status:'RUNNING'}))];
-  all.sort((a,b) => new Date(b.startTime) - new Date(a.startTime));
-  if (!all.length) { tb.innerHTML = '<tr><td colspan="8" class="empty">Keine Einträge.</td></tr>'; return; }
-  tb.innerHTML = all.map(e => `
-    <tr>
-      <td><strong>${e.employee.name}</strong></td>
-      <td>${fmtDate(e.startTime)}</td>
-      <td>${fmtTime(e.startTime)}</td>
-      <td>${e.endTime ? fmtTime(e.endTime) : '<span class="running-pill"><span class="running-dot"></span>läuft</span>'}</td>
-      <td>${e.breakMinutes ? e.breakMinutes + ' min' : '–'}</td>
-      <td style="font-weight:600">${e.totalMinutes ? fmtH(e.totalMinutes) : '–'}</td>
-      <td>${e.location ? `<span class="badge badge-blue">${e.location.name}</span>` : '–'}</td>
-      <td>
-        <button class="btn btn-outline btn-sm" onclick="openEdit('${e.id}','${e.startTime}','${e.endTime||''}',${e.breakMinutes})">✏</button>
-        <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);margin-left:4px" onclick="deleteEntry('${e.id}')">✕</button>
-      </td>
-    </tr>`).join('');
+  const el = document.getElementById('entries-list');
+  const all = [
+    ...data.weekEntries,
+    ...data.runningEntries.map(e => ({...e, status:'RUNNING'}))
+  ].sort((a,b) => new Date(b.startTime)-new Date(a.startTime));
+
+  if (!all.length) { el.innerHTML = '<div class="empty">Keine Einträge.</div>'; return; }
+
+  el.innerHTML = all.map(e => `
+    <div class="row-std">
+      <div class="emp-info">
+        <div class="emp-top">
+          <span class="emp-name" style="font-size:13px">${e.employee.name}</span>
+          <span class="emp-type">${fmtDate(e.startTime)}</span>
+        </div>
+        <div class="emp-sub">
+          ${fmtTime(e.startTime)} –
+          ${e.endTime
+            ? fmtTime(e.endTime) + (e.totalMinutes ? ' · <strong>' + fmtH(e.totalMinutes) + '</strong>' : '')
+            : '<span class="running-pill"><span class="running-dot"></span>läuft</span>'}
+          ${e.breakMinutes ? ' · ' + e.breakMinutes + 'min Pause' : ''}
+          ${e.location ? ' · <span class="badge badge-teal" style="font-size:10px">' + e.location.name + '</span>' : ''}
+        </div>
+      </div>
+      <div class="entry-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openEdit('${e.id}','${e.startTime}','${e.endTime||''}',${e.breakMinutes})">✏</button>
+        <button class="btn btn-red btn-sm" onclick="deleteEntry('${e.id}')">✕</button>
+      </div>
+    </div>`).join('');
 }
 
 // ── Absences ──────────────────────────────────────────────────────────────────
 function renderAbsences() {
-  const tb = document.getElementById('absence-body');
-  if (!data.monthAbsences.length) { tb.innerHTML = '<tr><td colspan="7" class="empty">Keine Abwesenheiten diesen Monat.</td></tr>'; return; }
+  const el = document.getElementById('absence-list');
+  if (!data.monthAbsences.length) { el.innerHTML = '<div class="empty">Keine Abwesenheiten diesen Monat.</div>'; return; }
   const typeLabel = { KRANK:'🤒 Krank', URLAUB:'🏖 Urlaub', ZEITAUSGLEICH:'⏱ Zeitausgleich', SONDERURLAUB:'🎉 Sonderurlaub' };
   const statusBadge = { GEMELDET:'badge-amber', BESTAETIGT:'badge-green', ABGELEHNT:'badge-red' };
   const statusLabel = { GEMELDET:'Gemeldet', BESTAETIGT:'Bestätigt', ABGELEHNT:'Abgelehnt' };
-  tb.innerHTML = data.monthAbsences.map(a => `
-    <tr>
-      <td><strong>${a.employee.name}</strong></td>
-      <td>${typeLabel[a.type] || a.type}</td>
-      <td>${fmtDate(a.startDate)}</td>
-      <td>${fmtDate(a.endDate)}</td>
-      <td>${a.durationDays} T</td>
-      <td><span class="badge ${statusBadge[a.status]}">${statusLabel[a.status]}</span></td>
-      <td style="display:flex;gap:4px">
-        ${a.status === 'GEMELDET' ? `
-          <button class="btn btn-green btn-sm" onclick="patchAbsence('${a.id}','BESTAETIGT')">✓</button>
-          <button class="btn btn-red btn-sm" onclick="patchAbsence('${a.id}','ABGELEHNT')">✕</button>` : ''}
-      </td>
-    </tr>`).join('');
+
+  el.innerHTML = data.monthAbsences.map(a => `
+    <div class="abs-row">
+      <div class="abs-info">
+        <div class="abs-name">${a.employee.name}</div>
+        <div class="abs-meta">${typeLabel[a.type]||a.type} · ${fmtDate(a.startDate)} – ${fmtDate(a.endDate)} · ${a.durationDays} T</div>
+        <div style="margin-top:5px"><span class="badge ${statusBadge[a.status]}">${statusLabel[a.status]}</span></div>
+      </div>
+      ${a.status==='GEMELDET' ? `<div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn btn-green btn-sm" onclick="patchAbsence('${a.id}','BESTAETIGT')">✓</button>
+        <button class="btn btn-red btn-sm" onclick="patchAbsence('${a.id}','ABGELEHNT')">✕</button>
+      </div>` : ''}
+    </div>`).join('');
 }
 
 // ── Baustellen ────────────────────────────────────────────────────────────────
 function renderBaustellen() {
-  const el = document.getElementById('baustellen-body');
-  if (!data.locations.length) { el.className = 'empty'; el.textContent = 'Keine aktiven Baustellen.'; return; }
-  el.className = 'tbl-wrap';
-  el.innerHTML = `<table>
-    <thead><tr><th>Baustelle</th><th>Adresse</th><th>Mitarbeiter vor Ort</th></tr></thead>
-    <tbody>
-      ${data.locations.map(l => `<tr>
-        <td><strong>${l.name}</strong></td>
-        <td style="color:var(--muted)">${l.address || '–'}</td>
-        <td>${l.assignments.length
-          ? l.assignments.map(a => `<span class="badge badge-blue" style="margin:2px">${a.employee.name}</span>`).join('')
-          : '<span class="badge badge-gray">–</span>'}</td>
-      </tr>`).join('')}
-    </tbody>
-  </table>`;
+  const el = document.getElementById('baustellen-list');
+  if (!data.locations.length) { el.innerHTML = '<div class="empty">Keine aktiven Baustellen.</div>'; return; }
+  el.innerHTML = data.locations.map(l => `
+    <div class="bl-row">
+      <div class="bl-name">${l.name}${l.address ? `<span style="font-weight:400;font-size:12px;color:var(--text-2)"> · ${l.address}</span>` : ''}</div>
+      <div class="bl-tags">
+        ${l.assignments.length
+          ? l.assignments.map(a=>`<span class="badge badge-teal">${a.employee.name}</span>`).join('')
+          : '<span class="badge badge-grey">Niemand eingeteilt</span>'}
+      </div>
+    </div>`).join('');
 }
 
 // ── Edit modal ────────────────────────────────────────────────────────────────
@@ -463,7 +507,6 @@ function toLocalInput(iso) {
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0,16);
 }
-
 function openEdit(id, start, end, brk) {
   editId = id;
   document.getElementById('edit-start').value = toLocalInput(start);
@@ -471,78 +514,69 @@ function openEdit(id, start, end, brk) {
   document.getElementById('edit-break').value  = brk || 0;
   document.getElementById('editModal').classList.add('open');
 }
-
 function closeModal() { document.getElementById('editModal').classList.remove('open'); }
 
 async function saveEdit() {
-  const startVal = document.getElementById('edit-start').value;
-  const endVal   = document.getElementById('edit-end').value;
-  const brkVal   = parseInt(document.getElementById('edit-break').value) || 0;
+  const sv = document.getElementById('edit-start').value;
+  const ev = document.getElementById('edit-end').value;
+  const bv = parseInt(document.getElementById('edit-break').value)||0;
   try {
     const r = await fetch(`${API}/entries/${editId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ startTime: startVal ? new Date(startVal).toISOString() : undefined, endTime: endVal ? new Date(endVal).toISOString() : undefined, breakMinutes: brkVal }),
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ startTime: sv?new Date(sv).toISOString():undefined, endTime: ev?new Date(ev).toISOString():undefined, breakMinutes: bv }),
     });
     if (!r.ok) throw new Error();
-    closeModal();
-    toast('Eintrag gespeichert ✓');
-    load();
-  } catch { toast('Fehler beim Speichern', true); }
+    closeModal(); showToast('Gespeichert ✓'); load();
+  } catch { showToast('Fehler beim Speichern', true); }
 }
 
 async function deleteEntry(id) {
   if (!confirm('Eintrag wirklich löschen?')) return;
-  await fetch(`${API}/entries/${id}`, { method: 'DELETE' });
-  toast('Eintrag gelöscht');
-  load();
+  await fetch(`${API}/entries/${id}`, {method:'DELETE'});
+  showToast('Eintrag gelöscht'); load();
 }
 
 async function patchAbsence(id, status) {
   await fetch(`${API}/absences/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
+    method:'PATCH', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({status}),
   });
-  toast(status === 'BESTAETIGT' ? 'Bestätigt ✓' : 'Abgelehnt');
-  load();
+  showToast(status==='BESTAETIGT' ? 'Bestätigt ✓' : 'Abgelehnt'); load();
 }
 
-// ── CSV Export ────────────────────────────────────────────────────────────────
+// ── CSV ───────────────────────────────────────────────────────────────────────
 function exportCSV(type) {
   const von = document.getElementById('von')?.value;
   const bis = document.getElementById('bis')?.value;
   let url = `${API}/export/${type}`;
-  const params = new URLSearchParams();
-  if (von) params.set('von', von);
-  if (bis) params.set('bis', bis);
-  if ([...params].length) url += '?' + params;
+  const p = new URLSearchParams();
+  if (von) p.set('von', von);
+  if (bis) p.set('bis', bis);
+  if ([...p].length) url += '?' + p;
   window.location.href = url;
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
-function toast(msg, isError = false) {
+let toastTimer;
+function showToast(msg, isErr=false) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.background = isError ? 'var(--red)' : '#1E293B';
+  t.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${isErr?'#f87171':'#34d399'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ${msg}`;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// ── Date defaults ─────────────────────────────────────────────────────────────
-function setDateDefaults() {
-  const now = new Date();
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-  if (document.getElementById('von')) document.getElementById('von').value = firstDay.toISOString().slice(0,10);
-  if (document.getElementById('bis')) document.getElementById('bis').value = now.toISOString().slice(0,10);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-setDateDefaults();
+(function setDateDefaults() {
+  const now = new Date();
+  const first = new Date(now.getFullYear(), now.getMonth(), 1);
+  if (document.getElementById('von')) document.getElementById('von').value = first.toISOString().slice(0,10);
+  if (document.getElementById('bis')) document.getElementById('bis').value = now.toISOString().slice(0,10);
+})();
+
 load();
 setInterval(load, 30000);
-
-document.getElementById('editModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.getElementById('editModal').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal(); });
 </script>
 </body>
 </html>
