@@ -80,7 +80,9 @@ model Company {
   // WhatsApp Business number linked to this company (E.164 format)
   waPhone     String?      @unique
   // signup token for self-service onboarding
-  signupToken String?      @unique
+  signupToken    String?      @unique
+  // secret link token for chef dashboard (no login required)
+  dashboardToken String       @unique @default(cuid())
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
