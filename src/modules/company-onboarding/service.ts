@@ -777,7 +777,8 @@ async function sendDsgvoRequest(phone: string, temp: TempData): Promise<void> {
       `Bevor ich alles speichere, kurz zum Datenschutz:\n\n` +
       `Rapido speichert deinen Namen, deine Mobilnummer sowie die Zeiterfassungsdaten deiner Mitarbeiter – ` +
       `ausschließlich zur Erbringung des Dienstes (DSGVO Art. 6 Abs. 1b). Du kannst deine Einwilligung jederzeit widerrufen.\n\n` +
-      `📄 rapido-handwerk.net/datenschutz\n\n` +
-      `Schreib *Ja* zum Speichern oder *Nein* zum Abbrechen.`,
+      `📄 Datenschutz: rapido-handwerk.net/datenschutz\n` +
+      `📋 Nutzungsbedingungen: rapido-handwerk.net/nutzungsbedingungen\n\n` +
+      `Mit *Ja* stimmst du beiden Dokumenten zu und speicherst deinen Betrieb. *Nein* bricht ab.`,
   });
 }
