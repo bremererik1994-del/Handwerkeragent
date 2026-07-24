@@ -288,6 +288,12 @@ async function finishOnboarding(phone: string, temp: TempData): Promise<void> {
   await wa.sendMessage({
     to: phone,
     text:
+      `Leite die folgende Nachricht einfach an deine Mitarbeiter weiter – sie müssen sich dann nur kurz anmelden und können sofort loslegen:`,
+  });
+
+  await wa.sendMessage({
+    to: phone,
+    text:
       `——————————————\n` +
       `*${company.name}* nutzt ab sofort Rapido für ${leistungen} – komplett per WhatsApp, kein App-Download, kein Papierkram.\n\n` +
       `Schreib einmal *Ja* an diese Nummer und du bist dabei:\n\n` +

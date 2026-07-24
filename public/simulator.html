@@ -538,6 +538,7 @@ function finishChefOnboarding() {
     (chefData.stundenzettel ? `📋 Stundenzettel: aktiv\n` : '') +
     (chefData.baustelle ? `🏗 Baustellenmonitoring: aktiv\n` : '') +
     `\n_Einwilligung widerrufen: "Datenschutz löschen"_`;
+  const hinweis = `Leite die folgende Nachricht einfach an deine Mitarbeiter weiter – sie müssen sich dann nur kurz anmelden und können sofort loslegen:`;
   const forward =
     `——————————————\n` +
     `*${chefData.betrieb}* nutzt ab sofort Rapido für ${leistungen} – komplett per WhatsApp, kein App-Download, kein Papierkram.\n\n` +
@@ -547,7 +548,7 @@ function finishChefOnboarding() {
     `\n\n– ${name}\n——————————————`;
   const kontakte =
     `Schick mir jetzt die Kontakte deiner Mitarbeiter direkt in den Chat – ich erstelle die Profile und verschicke die Einladungen automatisch.\n\nWenn du fertig bist, schreib *Fertig*.`;
-  return [summary, forward, kontakte];
+  return [summary, hinweis, forward, kontakte];
 }
 
 function guessIntent(text) {
